@@ -1,0 +1,70 @@
+[project]
+dynamic = ["version"]
+name = "nwsmonitor"
+description = "Discord bot that provides forecasts and alerts from the National Weather Service."
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = [
+    "weather",
+    "discord",
+    "discord bot",
+    "discord-py",
+    "py-cord",
+    "nws",
+    "iem",
+]
+authors = [
+  {name = "Nathaniel Greenwell", email = "nategreenwell@live.com"}
+]
+maintainers = [
+  {name = "Nathaniel Greenwell", email = "nategreenwell@live.com"}
+]
+dependencies = [
+    "aiohttp>=3.9.5",
+    "aiofiles>=24.1.0",
+    "py-cord>=2.6.0",
+    "tendo>=0.3.0",
+    "pandas>=2.2.2",
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Topic :: Internet",
+    "Topic :: Scientific/Engineering",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.urls]
+Repository = "https://github.com/ntvmb/nwsmonitor.git"
+Issues = "https://github.com/ntvmb/nwsmonitor/issues"
+Changelog = "https://github.com/ntvmb/nwsmonitor/blob/master/CHANGELOG.md"
+License = "https://github.com/ntvmb/nwsmonitor/blob/LICENSE"
+Discord = "https://discord.gg/xBHESnJYz5"
+
+[tool.poetry]
+name = "nwsmonitor"
+version = "0.0.1"
+description = "Discord bot that provides forecasts and alerts from the National Weather Service."
+authors = ["Nathaniel Greenwell <nategreenwell@live.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+aiohttp = "^3.9.5"
+pandas = "^2.2.2"
+py-cord = "^2.6.0"
+aiofiles = "^24.1.0"
+tendo = "^0.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

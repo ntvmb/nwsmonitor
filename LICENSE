@@ -1,0 +1,35 @@
+NWSMonitor License
+Copyright (c) 2024 Nathaniel Greenwell
+
+1. Permissions
+You are freely permitted to redistribute this program in source and binary
+forms, with or without modification, under the following conditions:
+a) You document any and all modifications.
+b) You do not charge for the program or any of its features.
+c) If modified, you must make the source code available.
+d) You do not use any license other than this license.
+e) You do not misrepresent the origin of the program.
+f) The names of the copyright holder and/or the contributors are not used to
+   promote or endorse products derived from this program without explicit
+   permission.
+
+Additional conditions may be included, as long as you make clear what the
+conditions are, and said conditions do not contradict the terms of this
+license.
+
+You may not use this program to cause harm to others, or otherwise introduce
+malicious code.
+
+2. Disclaimer of usage
+This program is not sponsored or endorsed by the National Weather Service (or
+any of its subsidiaries), the National Oceanic and Atmospheric Administration,
+the United States Department of Commerce, or any other government agency.
+You are not permitted to make claims contrary to the above.
+
+3. Disclaimer of warranty and limitation of liability
+THIS PROGRAM IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THIS PROGRAM.
