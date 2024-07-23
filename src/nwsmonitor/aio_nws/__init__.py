@@ -33,7 +33,7 @@ class ActiveAlertsCount:
         regions: dict = None,
         areas: dict = None,
         zones: dict = None,
-    ):
+    ) -> None:
         self.total = total
         self.land = land
         self.marine = marine
@@ -62,12 +62,12 @@ class Point(NamedTuple):
     lon: float
 
 
-async def check_status(response: aiohttp.ClientResponse):
+async def check_status(response: aiohttp.ClientResponse) -> None:
     if response.status not in {200, 301}:
         details = await response.json()
-        headers = await response.headers()
+        headers = response.headers
         raise aiohttp.ClientResponseError(
-            f"Status {response.status}. {deatils=}; {headers=}"
+            f"Status {response.status}. {details=}; {headers=}"
         )
 
 
@@ -88,6 +88,14 @@ async def fetch(
             return await resp.json()
         except aiohttp.ClientResponseError:
             return await resp.text()
+
+
+def locate(address: str) -> Point:
+    geolocator = Nominatim(user_agent=USER_AGENT)
+    location = geolocator.geocode(address, country_codes="us")
+    if location is None:
+        raise RuntimeError(f"Could not geolocate {address} within the US.")
+    return Point(location.latitude, location.longitude)
 
 
 async def afos(
@@ -151,7 +159,7 @@ async def alerts(
     event: Optional[List[str]] = None,
     code: Optional[List[str]] = None,
     area: Optional[List[str]] = None,
-    point: Optional[Point] = None,
+    point: Optional[Tuple[float, float]] = None,
     region: Optional[List[Literal["AL", "AT", "GL", "GM", "PA", "PI"]]] = None,
     region_type: Optional[Literal["land", "marine"]] = None,
     zone: Optional[[List[str]]] = None,
@@ -225,7 +233,7 @@ async def glossary() -> pd.DataFrame:
         return pd.DataFrame(data["glossary"])
 
 
-async def point_forecast(point: Point) -> Tuple[Any, pd.DataFrame]:
+async def point_forecast(point: Tuple[float, float]) -> Tuple[Any, pd.DataFrame]:
     async with aiohttp.ClientSession(
         base_url=BASE_URL_NWS, raise_for_status=check_status
     ) as session:
@@ -251,23 +259,15 @@ async def point_forecast(point: Point) -> Tuple[Any, pd.DataFrame]:
 
 
 async def get_forecast(address: str) -> Tuple[Any, pd.DataFrame]:
-    geolocator = Nominatim(user_agent=USER_AGENT)
-    location = geolocator.geocode(address)
-    if location is None:
-        raise RuntimeError(f"Could not geolocate {address}.")
-    if "United States" not in location.address:
-        raise RuntimeError(f"Location outside the US.")
-    return await point_forecast(Point(location.latitude, location.longitude))
+    location = locate(address)
+    return await point_forecast(location)
 
 
 async def ffg(address: str, valid: Optional[datetime.datetime] = None) -> pd.DataFrame:
     params = {}
-    geolocator = Nominatim(user_agent=USER_AGENT)
-    location = geolocator.geocode(address, country_codes="us")
-    if location is None:
-        raise RuntimeError(f"Could not geolocate {address} within the US.")
-    params["lon"] = location.longitude
-    params["lat"] = location.latitude
+    location = locate(address)
+    params["lon"] = location.lon
+    params["lat"] = location.lat
     if valid:
         if valid.tzinfo is None:
             raise ValueError("A time zone must be specified.")
