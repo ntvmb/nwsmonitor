@@ -17,19 +17,29 @@ from . import aio_nws as nws
 from . import server_vars
 from . import global_vars
 from .uptime import process_uptime_human_readable
+from .dir_calc import get_dir
 from io import StringIO
 from sys import exit
 
+NaN = float("nan")
 bot = discord.Bot(intents=discord.Intents.default())
 _log = logging.getLogger(__name__)
 
 
 def kmh_to_mph(kmh: float) -> float:
-    return x * 1.609344
+    return kmh / 1.609344
 
 
 def celsius_to_fahrenheit(c: float) -> float:
-    return x * 1.8 + 32
+    return c * 1.8 + 32
+
+
+def mm_to_inch(mm: float) -> float:
+    return mm / 25.4
+
+
+def pa_to_inhg(pa: float) -> float:
+    return pa * 0.00029529983071445
 
 
 @bot.event
@@ -97,3 +107,60 @@ async def on_application_command_error(
 async def ping(ctx: discord.ApplicationContext):
     await ctx.defer()
     await ctx.respond(f"Pong! `{bot.latency * 1000:.0f} ms`")
+
+
+@bot.slash_command(
+    name="current_conditions",
+    description="Get current conditions for a location (US Only)",
+)
+async def current_conditions(
+    ctx: discord.ApplicationContext,
+    location: Option(str, description="Address; City, State; or ZIP code."),
+):
+    await ctx.defer(ephemeral=True)
+    obs, forecast = await nws.get_forecast(location)
+    station_name = obs["station"][-4:]
+    embed = discord.Embed(
+        title=f"Current conditions at {station_name}",
+        thumbnail=obs["icon"], 
+        timestamp=datetime.datetime.fromisoformat(obs["timestamp"]),
+    )
+    temp = obs["temperature"]["value"]
+    temp_f = NaN if temp is None else celsius_to_fahrenheit(temp)
+    temp = NaN if temp_f == NaN else temp
+    dew = obs["dewpoint"]["value"]
+    dew_f = NaN if dew is None else celsius_to_fahrenheit(dew)
+    dew = NaN if dew_f == NaN else dew
+    rh = obs["relativeHumidity"]["value"]
+    rh = NaN if rh is None else rh
+    wind_dir = obs["windDirection"]["value"]
+    wind_dir = "N/A" if wind_dir is None else get_dir(wind_dir)
+    wind_speed = obs["windSpeed"]["value"]
+    wind_speed_mph = NaN if wind_speed is None else kmh_to_mph(wind_speed)
+    wind_gust = obs["windGust"]["value"]
+    wind_gust_mph = NaN if wind_gust is None else kmh_to_mph(wind_gust)
+    pressure = obs["barometricPressure"]["value"]
+    pressure_inhg = NaN if pressure is None else pa_to_inhg(pressure)
+    wind_chill = obs["windChill"]["value"]
+    wind_chill_f = NaN if wind_chill is None else celsius_to_fahrenheit(wind_chill)
+    heat_index = obs["heatIndex"]["value"]
+    heat_index_f = NaN if heat_index is None else celsius_to_fahrenheit(heat_index)
+    desc = StringIO()
+    desc.write(f"Weather: {obs["textDescription"]}\n")
+    desc.write(f"Temperature: {temp_f:.0f}F ({temp:.0f}C)\n")
+    desc.write(f"Dew point: {dew_f:.0f}F ({dew:.0f}C)\n")
+    desc.write(f"Humidity: {rh:.0f}%\n")
+    if heat_index is not None:
+        desc.write(f"Heat index: {heat_index_f:.0f}F ({heat_index:.0f}C)\n")
+    if wind_speed is not None and wind_speed > 0:
+        desc.write(f"Wind: {wind_dir} at {wind_speed_mph:.0f} mph ({wind_speed:.0f} km/h)\n")
+    else:
+        desc.write("Wind: Calm\n")
+    if wind_gust is not None:
+        desc.write(f"Gusts: {wind_gust_mph:.0f} mph ({wind_gust:.0f} km/h)\n")
+    if wind_chill is not None:
+        desc.write(f"Wind chill: {wind_chill_f:.0f}F ({wind_chill:.0f}C)\n")
+    if pressure is not None:
+        desc.write(f"Pressure: {pressure_inhg:.2f} in. Hg ({pressure / 100:.0f} mb)\n")
+    embed.description = desc.getvalue()
+    await ctx.respond(embed=embed)
