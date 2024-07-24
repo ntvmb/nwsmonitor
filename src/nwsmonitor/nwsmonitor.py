@@ -118,11 +118,11 @@ async def current_conditions(
     location: Option(str, description="Address; City, State; or ZIP code."),
 ):
     await ctx.defer(ephemeral=True)
-    obs = await nws.get_forecast(location)[0]
+    obs = (await nws.get_forecast(location))[0]
     station_name = obs["station"][-4:]
     embed = discord.Embed(
         title=f"Current conditions at {station_name}",
-        thumbnail=obs["icon"], 
+        thumbnail=obs["icon"],
         timestamp=datetime.datetime.fromisoformat(obs["timestamp"]),
     )
     temp = obs["temperature"]["value"]
@@ -139,30 +139,58 @@ async def current_conditions(
     wind_speed_mph = NaN if wind_speed is None else kmh_to_mph(wind_speed)
     wind_gust = obs["windGust"]["value"]
     wind_gust_mph = NaN if wind_gust is None else kmh_to_mph(wind_gust)
+    visibility = obs["visibility"]["value"] / 1000
+    visibility_mi = NaN if visibility is None else kmh_to_mph(visibility)
+    visibility = NaN if visibility is None else visibility
     pressure = obs["barometricPressure"]["value"]
     pressure_inhg = NaN if pressure is None else pa_to_inhg(pressure)
     wind_chill = obs["windChill"]["value"]
     wind_chill_f = NaN if wind_chill is None else celsius_to_fahrenheit(wind_chill)
     heat_index = obs["heatIndex"]["value"]
     heat_index_f = NaN if heat_index is None else celsius_to_fahrenheit(heat_index)
-    desc = StringIO()
-    desc.write(f"Weather: {obs["textDescription"]}\n")
-    desc.write(f"Temperature: {temp_f:.0f}F ({temp:.0f}C)\n")
-    desc.write(f"Dew point: {dew_f:.0f}F ({dew:.0f}C)\n")
-    desc.write(f"Humidity: {rh:.0f}%\n")
-    if heat_index is not None:
-        desc.write(f"Heat index: {heat_index_f:.0f}F ({heat_index:.0f}C)\n")
-    if wind_speed is not None and wind_speed > 0:
-        if wind_dir == "N/A":
-            wind_dir = "Variable"
-        desc.write(f"Wind: {wind_dir} at {wind_speed_mph:.0f} mph ({wind_speed:.0f} km/h)\n")
-    else:
-        desc.write("Wind: Calm\n")
-    if wind_gust is not None:
-        desc.write(f"Gusts: {wind_gust_mph:.0f} mph ({wind_gust:.0f} km/h)\n")
-    if wind_chill is not None:
-        desc.write(f"Wind chill: {wind_chill_f:.0f}F ({wind_chill:.0f}C)\n")
-    if pressure is not None:
-        desc.write(f"Pressure: {pressure_inhg:.2f} in. Hg ({pressure / 100:.0f} mb)\n")
-    embed.description = desc.getvalue()
+    with StringIO() as desc:
+        desc.write(f"Weather: {obs['textDescription']}\n")
+        desc.write(f"Temperature: {temp_f:.0f}F ({temp:.0f}C)\n")
+        desc.write(f"Dew point: {dew_f:.0f}F ({dew:.0f}C)\n")
+        desc.write(f"Humidity: {rh:.0f}%\n")
+        desc.write(f"Visibility: {visibility_mi:.2f} mile(s) ({visibility:.2f} km)\n")
+        if heat_index is not None:
+            desc.write(f"Heat index: {heat_index_f:.0f}F ({heat_index:.0f}C)\n")
+        if wind_speed is not None and wind_speed > 0:
+            if wind_dir == "N/A":
+                wind_dir = "Variable"
+            desc.write(
+                f"Wind: {wind_dir} at {wind_speed_mph:.0f} mph ({wind_speed:.0f} km/h)\n"
+            )
+        else:
+            desc.write("Wind: Calm\n")
+        if wind_gust is not None:
+            desc.write(f"Gusts: {wind_gust_mph:.0f} mph ({wind_gust:.0f} km/h)\n")
+        if wind_chill is not None:
+            desc.write(f"Wind chill: {wind_chill_f:.0f}F ({wind_chill:.0f}C)\n")
+        if pressure is not None:
+            desc.write(
+                f"Pressure: {pressure_inhg:.2f} in. Hg ({pressure / 100:.0f} mb)\n"
+            )
+        embed.description = desc.getvalue()
+    await ctx.respond(embed=embed)
+
+
+@bot.slash_command(
+    name="forecast", description="Get the forecast for a location (US only)"
+)
+async def forecast(
+    ctx: discord.ApplicationContext,
+    location: Option(str, "Address; City, State; or ZIP code."),
+):
+    await ctx.defer(ephemeral=True)
+    _, forecast, real_loc = await nws.get_forecast(location)
+    embed = discord.Embed(
+        title=f"Forecast for {real_loc.address.removesuffix(', United States')}",
+        thumbnail=forecast["icon"][0],
+    )
+    with StringIO() as desc:
+        for period, details in zip(forecast["name"], forecast["detailedForecast"]):
+            desc.write(f"{period}: {details}\n")
+        embed.description = desc.getvalue()
     await ctx.respond(embed=embed)

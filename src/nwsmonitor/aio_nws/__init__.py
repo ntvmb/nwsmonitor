@@ -5,7 +5,7 @@ import json
 import datetime
 import logging
 from dataclasses import dataclass
-from geopy import Nominatim
+from geopy import Nominatim, Location
 from typing import Optional, NamedTuple, Any, Union, Literal, List, Tuple
 
 USER_AGENT = "(NWSMonitor/debug, nategreenwell@live.com)"
@@ -89,12 +89,12 @@ async def fetch(
             return await resp.text()
 
 
-def locate(address: str) -> Point:
+def locate(address: str) -> Tuple[Point, Location]:
     geolocator = Nominatim(user_agent=USER_AGENT)
     location = geolocator.geocode(address, country_codes="us")
     if location is None:
         raise RuntimeError(f"Could not geolocate {address} within the US.")
-    return Point(location.latitude, location.longitude)
+    return Point(location.latitude, location.longitude), location
 
 
 async def afos(
@@ -257,16 +257,16 @@ async def point_forecast(point: Tuple[float, float]) -> Tuple[Any, pd.DataFrame]
         return obs, pd.DataFrame(forecast["periods"])
 
 
-async def get_forecast(address: str) -> Tuple[Any, pd.DataFrame]:
-    location = locate(address)
-    return await point_forecast(location)
+async def get_forecast(address: str) -> Tuple[Any, pd.DataFrame, Location]:
+    point, location = locate(address)
+    return await point_forecast(point) + (location,)
 
 
 async def ffg(address: str, valid: Optional[datetime.datetime] = None) -> pd.DataFrame:
     params = {}
-    location = locate(address)
-    params["lon"] = location.lon
-    params["lat"] = location.lat
+    point = locate(address)[0]
+    params["lon"] = point.lon
+    params["lat"] = point.lat
     if valid:
         if valid.tzinfo is None:
             raise ValueError("A time zone must be specified.")
