@@ -118,7 +118,7 @@ async def current_conditions(
     location: Option(str, description="Address; City, State; or ZIP code."),
 ):
     await ctx.defer(ephemeral=True)
-    obs, forecast = await nws.get_forecast(location)
+    obs = await nws.get_forecast(location)[0]
     station_name = obs["station"][-4:]
     embed = discord.Embed(
         title=f"Current conditions at {station_name}",
@@ -127,10 +127,10 @@ async def current_conditions(
     )
     temp = obs["temperature"]["value"]
     temp_f = NaN if temp is None else celsius_to_fahrenheit(temp)
-    temp = NaN if temp_f == NaN else temp
+    temp = NaN if temp is None else temp
     dew = obs["dewpoint"]["value"]
     dew_f = NaN if dew is None else celsius_to_fahrenheit(dew)
-    dew = NaN if dew_f == NaN else dew
+    dew = NaN if dew is None else dew
     rh = obs["relativeHumidity"]["value"]
     rh = NaN if rh is None else rh
     wind_dir = obs["windDirection"]["value"]
@@ -153,6 +153,8 @@ async def current_conditions(
     if heat_index is not None:
         desc.write(f"Heat index: {heat_index_f:.0f}F ({heat_index:.0f}C)\n")
     if wind_speed is not None and wind_speed > 0:
+        if wind_dir == "N/A":
+            wind_dir = "Variable"
         desc.write(f"Wind: {wind_dir} at {wind_speed_mph:.0f} mph ({wind_speed:.0f} km/h)\n")
     else:
         desc.write("Wind: Calm\n")

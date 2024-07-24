@@ -66,9 +66,7 @@ async def check_status(response: aiohttp.ClientResponse) -> None:
     if response.status not in {200, 301}:
         details = await response.json()
         headers = response.headers
-        raise aiohttp.ClientResponseError(
-            f"Status {response.status}. {details=}; {headers=}"
-        )
+        raise RuntimeError(f"Status {response.status}. {details=}; {headers=}")
 
 
 async def fetch(
@@ -84,6 +82,7 @@ async def fetch(
     async with client.get(
         api_call, params=kwargs, headers=headers, raise_for_status=check_status
     ) as resp:
+        _log.debug(f"Response headers: {resp.headers}")
         try:
             return await resp.json()
         except aiohttp.ClientResponseError:
@@ -253,7 +252,7 @@ async def point_forecast(point: Tuple[float, float]) -> Tuple[Any, pd.DataFrame]
             session,
             f"/stations/{station}/observations/latest",
             NWS_DATA_FORMAT,
-            require_qc="true",
+            require_qc="false",
         )
         return obs, pd.DataFrame(forecast["periods"])
 
