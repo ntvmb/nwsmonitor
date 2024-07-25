@@ -148,6 +148,7 @@ async def active_alerts_count() -> ActiveAlertsCount:
 
 
 async def alerts(
+    *,
     active: bool = True,
     start: Optional[datetime.datetime] = None,
     end: Optional[datetime.datetime] = None,
@@ -161,7 +162,7 @@ async def alerts(
     point: Optional[Tuple[float, float]] = None,
     region: Optional[List[Literal["AL", "AT", "GL", "GM", "PA", "PI"]]] = None,
     region_type: Optional[Literal["land", "marine"]] = None,
-    zone: Optional[[List[str]]] = None,
+    zone: Optional[List[str]] = None,
     urgency: Optional[
         List[Literal["Immediate", "Expected", "Future", "Past", "Unknown"]]
     ] = None,
@@ -173,6 +174,7 @@ async def alerts(
     ] = None,
     limit: int = 500,
     cursor: Optional[str] = None,
+    **kwargs,
 ) -> pd.DataFrame:
     params = {}
     if active:
@@ -224,6 +226,11 @@ async def alerts(
         return pd.DataFrame(data["@graph"])
 
 
+async def alerts_for_location(address: str, **kwargs) -> pd.DataFrame:
+    point = locate(address)[0]
+    return await alerts(point=point, **kwargs)
+
+
 async def glossary() -> pd.DataFrame:
     async with aiohttp.ClientSession(
         base_url=BASE_URL_NWS, raise_for_status=check_status
@@ -232,18 +239,20 @@ async def glossary() -> pd.DataFrame:
         return pd.DataFrame(data["glossary"])
 
 
-async def point_forecast(point: Tuple[float, float]) -> Tuple[Any, pd.DataFrame]:
+async def point_forecast(
+    point: Tuple[float, float], units: Optional[Literal["us", "si"]] = "us"
+) -> Tuple[Any, pd.DataFrame]:
     async with aiohttp.ClientSession(
         base_url=BASE_URL_NWS, raise_for_status=check_status
     ) as session:
-        html_point = f"{point.lat},{point.lon}"
+        html_point = f"{point[0]},{point[1]}"
         data = await fetch(session, f"/points/{html_point}", NWS_DATA_FORMAT)
         wfo = data["cwa"]
         x = data["gridX"]
         y = data["gridY"]
         gridpoint = f"/gridpoints/{wfo}/{x},{y}"
         forecast = await fetch(
-            session, f"{gridpoint}/forecast", NWS_DATA_FORMAT, units="us"
+            session, f"{gridpoint}/forecast", NWS_DATA_FORMAT, units=units
         )
         stations = await fetch(session, f"{gridpoint}/stations", NWS_DATA_FORMAT)
         stations = pd.DataFrame(stations["@graph"])
@@ -257,9 +266,11 @@ async def point_forecast(point: Tuple[float, float]) -> Tuple[Any, pd.DataFrame]
         return obs, pd.DataFrame(forecast["periods"])
 
 
-async def get_forecast(address: str) -> Tuple[Any, pd.DataFrame, Location]:
+async def get_forecast(
+    address: str, units: Optional[Literal["us", "si"]] = "us"
+) -> Tuple[Any, pd.DataFrame, Location]:
     point, location = locate(address)
-    return await point_forecast(point) + (location,)
+    return await point_forecast(point, units) + (location,)
 
 
 async def ffg(address: str, valid: Optional[datetime.datetime] = None) -> pd.DataFrame:

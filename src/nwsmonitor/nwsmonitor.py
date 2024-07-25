@@ -5,6 +5,7 @@ import datetime
 import logging
 import time
 import discord
+import aiofiles
 from discord import (
     option,
     default_permissions,
@@ -182,9 +183,12 @@ async def current_conditions(
 async def forecast(
     ctx: discord.ApplicationContext,
     location: Option(str, "Address; City, State; or ZIP code."),
+    units: Option(
+        str, "Use US or SI units (default: us)", required=False, choices=["us", "si"]
+    ) = "us",
 ):
     await ctx.defer(ephemeral=True)
-    _, forecast, real_loc = await nws.get_forecast(location)
+    _, forecast, real_loc = await nws.get_forecast(location, units)
     embed = discord.Embed(
         title=f"Forecast for {real_loc.address.removesuffix(', United States')}",
         thumbnail=forecast["icon"][0],
@@ -194,3 +198,149 @@ async def forecast(
             desc.write(f"{period}: {details}\n")
         embed.description = desc.getvalue()
     await ctx.respond(embed=embed)
+
+
+@bot.slash_command(name="glossary", description="Look up a meteorological term")
+async def glossary(
+    ctx: discord.ApplicationContext,
+    term: Option(str, "The term to look for (in title case)"),
+):
+    await ctx.defer()
+    gloss = await nws.glossary()
+    terms = gloss[gloss["term"] == term]
+    if terms.empty:
+        await ctx.respond(
+            "Term not found. (Check your spelling!)\n\
+Note: Terms are case-sensitive. Try using title case!"
+        )
+    else:
+        with StringIO() as ss:
+            for t, d in zip(terms["term"], terms["definition"]):
+                ss.write(f"# {t}\n{d}\n")
+            await ctx.respond(ss.getvalue())
+
+
+@bot.slash_command(name="alerts", description="Look up alerts")
+async def alerts(
+    ctx: discord.ApplicationContext,
+    active: Option(
+        bool, description="Only show active alerts (default: True)", required=False
+    ) = True,
+    start_date: Option(
+        str,
+        description="Filter by start date/time (ISO format, ignored if active=True)",
+        required=False,
+    ) = None,
+    end_date: Option(
+        str,
+        description="Filter by end date/time (ISO format, ignored if active=True)",
+        required=False,
+    ) = None,
+    status: Option(
+        str,
+        description="Alert status",
+        choices=["actual", "exercise", "system", "test", "draft"],
+        required=False,
+    ) = None,
+    message_type: Option(
+        str,
+        description="Filter by message type",
+        choices=["alert", "update", "cancel"],
+        required=False,
+    ) = None,
+    event: Option(
+        str,
+        description="Comma-separated list of alert names",
+        required=False,
+    ) = None,
+    code: Option(
+        str,
+        description="Comma-separated list of alert codes",
+        required=False,
+    ) = None,
+    location: Option(
+        str,
+        description="Filter by alert location",
+        required=False,
+    ) = None,
+    urgency: Option(
+        str,
+        description="Filter alerts by urgency",
+        choices=["Immediate", "Expected", "Future", "Past", "Unknown"],
+        required=False,
+    ) = None,
+    severity: Option(
+        str,
+        description="Filter alerts by severity",
+        choices=["Extreme", "Severe", "Moderate", "Minor", "Unknown"],
+        required=False,
+    ) = None,
+    certainty: Option(
+        str,
+        description="Filter alerts by certainty",
+        choices=["Observed", "Likely", "Possible", "Unlikely", "Unknown"],
+        required=False,
+    ) = None,
+    limit: Option(int, description="Limit number of alerts", required=False) = 500,
+):
+    await ctx.defer()
+    if start_date:
+        start_date = datetime.datetime.fromisoformat(start_date)
+    if end_date:
+        end_date = datetime.datetime.fromisoformat(end_date)
+    if location:
+        alerts_list = await nws.alerts_for_location(
+            location,
+            active=active,
+            start=start_date,
+            end=end_date,
+            status=status,
+            message_type=message_type,
+            event=event,
+            code=code,
+            urgency=urgency,
+            severity=severity,
+            certainty=certainty,
+            limit=limit,
+        )
+    else:
+        alerts_list = await nws.alerts(
+            active=active,
+            start=start_date,
+            end=end_date,
+            status=status,
+            message_type=message_type,
+            event=event,
+            code=code,
+            urgency=urgency,
+            severity=severity,
+            certainty=certainty,
+            limit=limit,
+        )
+    if not alerts_list.empty:
+        async with aiofiles.open("alerts.txt", "w") as fp:
+            for head, params, desc, inst in zip(
+                alerts_list["headline"],
+                alerts_list["parameters"],
+                alerts_list["description"],
+                alerts_list["instruction"],
+            ):
+                try:
+                    nws_head = params["NWSheadline"][0]
+                except KeyError:
+                    nws_head = None
+                await fp.write(f"{head}\n\n")
+                if nws_head:
+                    await fp.write(f"{nws_head.center(len(nws_head) + 6, ".")}\n\n")
+                if desc:
+                    await fp.write(f"{desc}\n\n")
+                if inst:
+                    await fp.write(f"{inst}\n\n")
+                await fp.write("$$\n\n")
+        with open("alerts.txt", "rb") as fp:
+            await ctx.respond(f"{len(alerts_list)} alert(s) found.", file=discord.File(fp))
+    else:
+        await ctx.respond("No alerts found with the given parameters.\n\
+If looking for older alerts, try using the \
+[IEM NWS Text Product Finder](https://mesonet.agron.iastate.edu/wx/afos)."
+        )
