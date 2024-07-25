@@ -78,7 +78,7 @@ async def fetch(
     headers = {"User-Agent": USER_AGENT}
     if accept:
         headers["Accept"] = accept
-    _log.debug(f"Fetching {client._base_url}{api_call} with {headers=}")
+    _log.debug(f"Fetching {client._base_url}{api_call} with {headers=} and {kwargs=}")
     async with client.get(
         api_call, params=kwargs, headers=headers, raise_for_status=check_status
     ) as resp:
@@ -201,7 +201,7 @@ async def alerts(
     if area:
         params["area"] = area
     if point:
-        params["point"] = point
+        params["point"] = f"{point[0]},{point[1]}"
     if region:
         params["region"] = region
     if region_type:

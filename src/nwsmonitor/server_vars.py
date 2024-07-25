@@ -10,6 +10,7 @@ json_file = "serverVars.json"
 
 def write(var_name: str, value: Any, guild: int) -> None:
     # if the json file exists, load it, otherwise initialize a blank dict
+    guild = str(guild)
     try:
         with open(json_file, "r") as f:
             data = json.load(f)
@@ -28,6 +29,7 @@ def write(var_name: str, value: Any, guild: int) -> None:
 
 
 def get(var_name: str, guild: int) -> Any:
+    guild = str(guild)
     try:
         with open(json_file, "r") as f:
             data = json.load(f)
@@ -42,6 +44,7 @@ def get(var_name: str, guild: int) -> Any:
 
 
 def remove_guild(guild: int) -> None:
+    guild = str(guild)
     try:
         with open(json_file, "r") as f:
             data = json.load(f)
