@@ -245,11 +245,86 @@ async def send_alerts(
             if m_type == "Alert":
                 m_verb = "issues"
             elif m_type == "Update":
-                m_verb = "continues"
+                m_verb = "updates"
             else:
                 m_verb = "cancels"
+
+            try:
+                tornado = params["tornadoDetection"][0]
+            except KeyError:
+                tornado = None
+            try:
+                tor_damage_threat = params["tornadoDamageThreat"][0]
+            except KeyError:
+                tor_damage_threat = None
+            try:
+                wind_threat = params["windThreat"][0]
+            except KeyError:
+                wind_threat = None
+            try:
+                max_wind = params["maxWindGust"][0]
+            except KeyError:
+                max_wind = None
+            try:
+                hail_threat = params["hailThreat"][0]
+            except KeyError:
+                hail_threat = None
+            try:
+                max_hail = params["maxHailSize"][0]
+            except KeyError:
+                max_hail = None
+            try:
+                tstm_damage_threat = params["thunderstormDamageThreat"][0]
+            except KeyError:
+                tstm_damage_threat = None
+            try:
+                flash_flood = params["flashFloodDetection"][0]
+            except KeyError:
+                flash_flood = None
+            try:
+                ff_damage_threat = params["flashFloodDamageThreat"][0]
+            except KeyError:
+                ff_damage_threat = None
+
+            if event == "Tornado Warning" and tor_damage_threat == "CONSIDERABLE":
+                event = "Tornado Warning (PDS)"
+            elif event == "Tornado Warning" and tor_damage_threat == "CATASTROPHIC":
+                event = "Tornado Emergency"
+            elif event == "Flash Flood Warning" and ff_damage_threat == "CATASTROPHIC":
+                event = "Flash Flood Emergency"
+
             with StringIO() as ss:
                 ss.write(f"{sender_name} {m_verb} {event} ")
+                if (
+                    tornado is not None
+                    or max_wind is not None
+                    or max_hail is not None
+                    or flash_flood is not None
+                    or tstm_damage_threat is not None
+                ):
+                    ss.write("(")
+                    if tornado is not None:
+                        ss.write(f"tornado: {tornado}, ")
+                    if tor_damage_threat is not None:
+                        ss.write(f"damage threat: {tor_damage_threat}, ")
+                    if tstm_damage_threat is not None:
+                        ss.write(f"damage threat: {tstm_damage_threat}, ")
+                    if flash_flood is not None:
+                        ss.write(f"flash flood: {flash_flood}, ")
+                    if ff_damage_threat is not None:
+                        ss.write(f"damage threat: {ff_damage_threat}, ")
+                    if max_wind is not None:
+                        ss.write(f"wind: {max_wind}")
+                        if wind_threat is not None:
+                            ss.write(f" ({wind_threat})")
+                        ss.write(", ")
+                    if max_hail is not None:
+                        ss.write(f'hail: {max_hail}"')
+                        if hail_threat is not None:
+                            ss.write(f" ({hail_threat})")
+                        ss.write(", ")
+                    ss.seek(ss.tell() - 2)  # go back 2 characters
+                    ss.write(") ")
                 if sent != onset and onset is not None:
                     onset = int(datetime.datetime.fromisoformat(onset).timestamp())
                     ss.write(f"valid <t:{onset}:f> ")
