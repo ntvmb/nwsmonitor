@@ -150,7 +150,7 @@ class NWSMonitor(commands.Cog):
                 alerts_list["parameters"],
                 alerts_list["expires"],
             ):
-                if i not in prev_ids_array:
+                if i not in prev_ids_array and ev != "Test Message":
                     new_alerts.append(
                         {
                             "id": i,
