@@ -3,3 +3,5 @@ src/nwsmonitor/aio_nws/__pycache__
 nwsmonitor.code-workspace
 *.json
 aler*.txt
+start.sh
+*.log

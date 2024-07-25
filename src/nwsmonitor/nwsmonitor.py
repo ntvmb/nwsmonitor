@@ -237,6 +237,8 @@ async def send_alerts(
             exp = alert[4]
             _log.debug(f"{desc=}")
             _log.debug(f"{inst=}")
+            if event == "Test Message":
+                continue
             if m_type == "Alert":
                 m_verb = "issues"
             elif m_type == "Update":
