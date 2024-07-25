@@ -135,7 +135,7 @@ class NWSMonitor(commands.Cog):
         else:
             prev_alerts_list = DataFrame(prev_alerts_list)
             prev_ids_array = prev_alerts_list["id"].array
-            for i, ad, se, o, en, mt, ev, sn, hl, d, ins, p in zip(
+            for i, ad, se, o, en, mt, ev, sn, hl, d, ins, p, ex in zip(
                 alerts_list["id"],
                 alerts_list["areaDesc"],
                 alerts_list["sent"],
@@ -148,6 +148,7 @@ class NWSMonitor(commands.Cog):
                 alerts_list["description"],
                 alerts_list["instruction"],
                 alerts_list["parameters"],
+                alerts_list["expires"],
             ):
                 if i not in prev_ids_array:
                     new_alerts.append(
@@ -164,6 +165,7 @@ class NWSMonitor(commands.Cog):
                             "description": d,
                             "instruction": ins,
                             "parameters": p,
+                            "expires": ex,
                         }
                     )
             new_alerts = DataFrame(new_alerts)
@@ -234,7 +236,8 @@ async def send_alerts(
             sent = alert[2]
             onset = alert[3]
             areas = alert[1]
-            exp = alert[4]
+            exp = alert[12]
+            end = alert[4]
             _log.debug(f"{desc=}")
             _log.debug(f"{inst=}")
             if event == "Test Message":
@@ -250,7 +253,10 @@ async def send_alerts(
                 if sent != onset and onset is not None:
                     onset = int(datetime.datetime.fromisoformat(onset).timestamp())
                     ss.write(f"valid <t:{onset}:f> ")
-                if exp is not None:
+                if end is not None:
+                    end = int(datetime.datetime.fromisoformat(end).timestamp())
+                    ss.write(f"until <t:{end}:f> ")
+                elif exp is not None:
                     exp = int(datetime.datetime.fromisoformat(exp).timestamp())
                     ss.write(f"until <t:{exp}:f> ")
                 else:
