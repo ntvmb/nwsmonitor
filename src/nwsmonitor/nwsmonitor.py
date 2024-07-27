@@ -6,6 +6,8 @@ import logging
 import time
 import discord
 import aiofiles
+import aiohttp
+import asyncio
 from discord import (
     option,
     default_permissions,
@@ -47,14 +49,26 @@ def pa_to_inhg(pa: float) -> float:
 
 @bot.event
 async def on_ready():
-    global monitor
     watching = discord.Activity(
         type=discord.ActivityType.watching, name="what the clouds are doing"
     )
     await bot.change_presence(activity=watching, status=discord.Status.dnd)
     _log.info(f"Logged in as {bot.user}.")
     global_vars.write("guild_count", len(bot.guilds))
-    monitor = NWSMonitor(bot)
+    bot.add_cog(NWSMonitor(bot))
+
+
+@bot.event
+async def on_disconnect():
+    _log.warning("Client disconnected.")
+    bot.remove_cog("NWSMonitor")
+
+
+@bot.event
+async def on_resumed():
+    _log.info("Resumed session.")
+    if bot.get_cog("NWSMonitor") is None and bot.is_ready():
+        bot.add_cog(NWSMonitor(bot))
 
 
 @bot.event
@@ -109,7 +123,7 @@ async def on_application_command_error(
 
 
 class NWSMonitor(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
         _log.info("Starting monitor...")
         self.update_alerts.start()
@@ -186,6 +200,13 @@ class NWSMonitor(commands.Cog):
                     if channel_id is not None:
                         await send_alerts(guild.id, channel_id, new_alerts)
         global_vars.write("prev_alerts_list", alerts_list.to_dict("list"))
+
+    @update_alerts.error
+    async def on_update_alerts_error(self, error: Exception):
+        _log.exception(
+            "An error occurred while getting or sending alerts.",
+            exc_info=(type(error), error, error.__traceback__),
+        )
 
 
 async def _write_alerts_list(

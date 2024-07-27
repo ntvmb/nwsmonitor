@@ -80,7 +80,11 @@ async def fetch(
         headers["Accept"] = accept
     _log.debug(f"Fetching {client._base_url}{api_call} with {headers=} and {kwargs=}")
     async with client.get(
-        api_call, params=kwargs, headers=headers, raise_for_status=check_status
+        api_call,
+        params=kwargs,
+        headers=headers,
+        raise_for_status=check_status,
+        timeout=aiohttp.ClientTimeout(total=60),
     ) as resp:
         _log.debug(f"Response headers: {resp.headers}")
         try:
