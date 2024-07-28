@@ -30,6 +30,8 @@ from sys import exit
 
 NaN = float("nan")
 bot = discord.Bot(intents=discord.Intents.default())
+settings = bot.create_group("settings", "Configure the bot")
+filtering = settings.create_subgroup("filtering", "Settings related to filtering")
 _log = logging.getLogger(__name__)
 
 
@@ -151,53 +153,62 @@ class NWSMonitor(commands.Cog):
         else:
             prev_alerts_list = DataFrame(prev_alerts_list)
             prev_ids_array = prev_alerts_list["id"].array
-            for i, ad, se, o, en, mt, ev, sn, hl, d, ins, p, ex in zip(
-                alerts_list["id"],
-                alerts_list["areaDesc"],
-                alerts_list["sent"],
-                alerts_list["onset"],
-                alerts_list["ends"],
-                alerts_list["messageType"],
-                alerts_list["event"],
-                alerts_list["senderName"],
-                alerts_list["headline"],
-                alerts_list["description"],
-                alerts_list["instruction"],
-                alerts_list["parameters"],
-                alerts_list["expires"],
-            ):
-                if i not in prev_ids_array and ev != AlertType.TEST.value:
-                    new_alerts.append(
-                        {
-                            "id": i,
-                            "areaDesc": ad,
-                            "sent": se,
-                            "onset": o,
-                            "ends": en,
-                            "messageType": mt,
-                            "event": ev,
-                            "senderName": sn,
-                            "headline": hl,
-                            "description": d,
-                            "instruction": ins,
-                            "parameters": p,
-                            "expires": ex,
-                        }
-                    )
-            new_alerts = DataFrame(new_alerts)
-            _log.debug(f"New alerts: {new_alerts}")
-            # avoid rate limiting
-            if len(new_alerts) > 5:
-                async with aiofiles.open("alerts_.txt", "w") as fp:
-                    await _write_alerts_list(fp, new_alerts)
-                for guild in self.bot.guilds:
+            for guild in self.bot.guilds:
+                excluded_alerts = server_vars.get("exclude_alerts", guild.id)
+                excluded_wfos = server_vars.get("exclude_wfos", guild.id)
+                if excluded_alerts is None:
+                    excluded_alerts = []
+                if excluded_wfos is None:
+                    excluded_wfos = []
+                for i, ad, se, o, en, mt, ev, sn, hl, d, ins, p, ex in zip(
+                    alerts_list["id"],
+                    alerts_list["areaDesc"],
+                    alerts_list["sent"],
+                    alerts_list["onset"],
+                    alerts_list["ends"],
+                    alerts_list["messageType"],
+                    alerts_list["event"],
+                    alerts_list["senderName"],
+                    alerts_list["headline"],
+                    alerts_list["description"],
+                    alerts_list["instruction"],
+                    alerts_list["parameters"],
+                    alerts_list["expires"],
+                ):
+                    if i not in prev_ids_array and not (
+                        sn in excluded_wfos
+                        or ev in excluded_alerts
+                        or ev == AlertType.TEST.value
+                    ):
+                        new_alerts.append(
+                            {
+                                "id": i,
+                                "areaDesc": ad,
+                                "sent": se,
+                                "onset": o,
+                                "ends": en,
+                                "messageType": mt,
+                                "event": ev,
+                                "senderName": sn,
+                                "headline": hl,
+                                "description": d,
+                                "instruction": ins,
+                                "parameters": p,
+                                "expires": ex,
+                            }
+                        )
+                new_alerts = DataFrame(new_alerts)
+                _log.debug(f"New alerts: {new_alerts}")
+                # avoid rate limiting
+                if len(new_alerts) > 5:
+                    async with aiofiles.open("alerts_.txt", "w") as fp:
+                        await _write_alerts_list(fp, new_alerts)
                     channel_id = server_vars.get("monitor_channel", guild.id)
                     if channel_id is not None:
                         await send_alerts(
                             guild.id, channel_id, alert_count=len(new_alerts)
                         )
-            else:
-                for guild in self.bot.guilds:
+                else:
                     channel_id = server_vars.get("monitor_channel", guild.id)
                     if channel_id is not None:
                         await send_alerts(guild.id, channel_id, new_alerts)
@@ -609,12 +620,12 @@ If looking for older alerts, try using the \
         )
 
 
-@bot.slash_command(
-    name="set_alert_channel", description="Set the channel to send new alerts to"
+@settings.command(
+    name="alert_channel", description="Set the channel to send new alerts to"
 )
 @guild_only()
 @commands.has_guild_permissions(manage_channels=True)
-async def set_alert_channel(
+async def alert_channel(
     ctx: discord.ApplicationContext,
     channel: Option(discord.TextChannel, description="The channel to use"),
 ):
@@ -627,3 +638,96 @@ async def set_alert_channel(
             f"I cannot send messages to that channel.\n\
 Give me permission to post in said channel, or use a different channel."
         )
+
+
+@filtering.command(
+    name="exclude_wfo",
+    description="Exclude alerts from a WFO",
+)
+@guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def exclude_wfo(
+    ctx: discord.ApplicationContext,
+    wfo: Option(
+        str,
+        description="The WFO to exclude",
+        autocomplete=discord.utils.basic_autocomplete([w.value for w in WFO]),
+    ),
+):
+    await ctx.defer(ephemeral=True)
+    exclusions = server_vars.get("exclude_wfos", ctx.guild_id)
+    if isinstance(exclusions, list):
+        if wfo not in exclusions:
+            exclusions.append(wfo)
+        else:
+            await ctx.respond(f"{wfo} is already excluded.")
+            return
+    else:
+        exclusions = [wfo]
+    server_vars.write("exclude_wfos", exclusions, ctx.guild_id)
+    await ctx.respond(f"Added {wfo} to the exclusion list.")
+
+
+@filtering.command(
+    name="exclude_alert",
+    description="Exclude an alert type",
+)
+@guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def exclude_alert(
+    ctx: discord.ApplicationContext,
+    alert: Option(
+        str,
+        description="The alert to exclude",
+        autocomplete=discord.utils.basic_autocomplete(
+            [a.value for a in AlertType if a not in REQUIRED_ALERTS]
+        ),
+    ),
+):
+    await ctx.defer(ephemeral=True)
+    exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
+    if isinstance(exclusions, list):
+        if alert not in exclusions:
+            exclusions.append(alert)
+        else:
+            await ctx.respond(f'"{alert}" is already excluded.')
+    else:
+        exclusions = [alert]
+    server_vars.write("exclude_alerts", exclusions, ctx.guild_id)
+    await ctx.respond(f'Added "{alert}" to the exclusion list.')
+
+
+@filtering.command(
+    name="exclude_marine_alerts",
+    description="Shortcut to exclude all marine alerts",
+)
+@guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def exclude_marine_alerts(ctx: discord.ApplicationContext):
+    await ctx.defer(ephemeral=True)
+    exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
+    if isinstance(exclusions, list):
+        # Working with a set here ensures that there are no duplicate
+        # elements.
+        exclusions = set(exclusions).update({a.value for a in MARINE_ALERTS})
+        exclusions = list(exclusions)
+    else:
+        exclusions = [a.value for a in MARINE_ALERTS]
+    server_vars.write("exclude_alerts", exclusions, ctx.guild_id)
+    await ctx.respond(
+        "Added all marine alerts to the exclusion list. Note: Only alert \
+types that are exclusively issued in marine locations are excluded."
+    )
+
+
+@filtering.command(
+    name="clear_filters",
+    description="Clear ALL filters (This cannot be undone!)",
+)
+@guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def clear_filters(ctx: discord.ApplicationContext):
+    await ctx.defer(ephemeral=True)
+    server_vars.write("exclude_wfos", [], ctx.guild_id)
+    server_vars.write("exclude_alerts", [], ctx.guild_id)
+    await ctx.respond("Cleared all filters.")
