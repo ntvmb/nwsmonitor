@@ -8,6 +8,7 @@ import discord
 import aiofiles
 import aiohttp
 import asyncio
+import textwrap
 from discord import (
     option,
     default_permissions,
@@ -224,7 +225,10 @@ async def _write_alerts_list(
             nws_head = None
         await fp.write(f"{head}\n\n")
         if nws_head:
-            await fp.write(f"{nws_head.center(len(nws_head) + 6, '.')}\n\n")
+            formatted_nws_head = "\n".join(
+                textwrap.wrap(nws_head.center(len(nws_head) + 6, "."))
+            )
+            await fp.write(f"{formatted_nws_head}\n\n")
         if desc:
             await fp.write(f"{desc}\n\n")
         if inst:
@@ -365,7 +369,10 @@ async def send_alerts(
                 nws_head = None
             async with aiofiles.open(f"alert{i}.txt", "w") as b:
                 if nws_head:
-                    await b.write(f"{nws_head.center(len(nws_head) + 6, '.')}\n\n")
+                    formatted_nws_head = "\n".join(
+                        textwrap.wrap(nws_head.center(len(nws_head) + 6, "."))
+                    )
+                    await b.write(f"{formatted_nws_head}\n\n")
                 if desc:
                     await b.write(f"{desc}\n\n")
                 if inst:
