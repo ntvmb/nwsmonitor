@@ -154,8 +154,10 @@ class NWSMonitor(commands.Cog):
             prev_alerts_list = DataFrame(prev_alerts_list)
             prev_ids_array = prev_alerts_list["id"].array
             for guild in self.bot.guilds:
+                new_alerts = []
                 excluded_alerts = server_vars.get("exclude_alerts", guild.id)
                 excluded_wfos = server_vars.get("exclude_wfos", guild.id)
+                wfo_list = server_vars.get("wfo_list", guild.id)
                 if excluded_alerts is None:
                     excluded_alerts = []
                 if excluded_wfos is None:
@@ -175,10 +177,14 @@ class NWSMonitor(commands.Cog):
                     alerts_list["parameters"],
                     alerts_list["expires"],
                 ):
-                    if i not in prev_ids_array and not (
-                        sn in excluded_wfos
-                        or ev in excluded_alerts
-                        or ev == AlertType.TEST.value
+                    if (
+                        i not in prev_ids_array
+                        and not (
+                            sn in excluded_wfos
+                            or ev in excluded_alerts
+                            or ev == AlertType.TEST.value
+                        )
+                        and (not (wfo_list) or sn in wfo_list)
                     ):
                         new_alerts.append(
                             {
@@ -329,6 +335,8 @@ async def send_alerts(
                 event = SpecialAlert.TOR_E.value
             elif event == AlertType.FFW.value and ff_damage_threat == "CATASTROPHIC":
                 event = SpecialAlert.FFW_E.value
+            elif event == AlertType.SVR.value and tstm_damage_threat == "DESTRUCTIVE":
+                event = SpecialAlert.PDS_SVR.value
 
             with StringIO() as ss:
                 ss.write(f"{sender_name} {m_verb} {event} ")
@@ -728,6 +736,60 @@ types that are exclusively issued in marine locations are excluded."
 @commands.has_guild_permissions(manage_guild=True)
 async def clear_filters(ctx: discord.ApplicationContext):
     await ctx.defer(ephemeral=True)
-    server_vars.write("exclude_wfos", [], ctx.guild_id)
-    server_vars.write("exclude_alerts", [], ctx.guild_id)
+    server_vars.write("exclude_wfos", None, ctx.guild_id)
+    server_vars.write("exclude_alerts", None, ctx.guild_id)
+    server_vars.write("wfo_list", None, ctx.guild_id)
     await ctx.respond("Cleared all filters.")
+
+
+@filtering.command(
+    name="only_from_wfo",
+    description="Only send alerts from (a) certain WFO(s)",
+)
+@guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def only_from_wfo(
+    ctx: discord.ApplicationContext,
+    wfo: Option(
+        str,
+        "The WFO to add",
+        autocomplete=discord.utils.basic_autocomplete([w.value for w in WFO]),
+    ),
+):
+    await ctx.defer(ephemeral=True)
+    exclusions = server_vars.get("exclude_wfos", ctx.guild_id)
+    wfo_list = server_vars.get("wfo_list", ctx.guild_id)
+    if isinstance(wfo_list, list):
+        if isinstance(exclusions, list) and wfo in exclusions:
+            await ctx.respond("Cannot use an excluded WFO.")
+            return
+        wfo_list.append(wfo)
+    else:
+        wfo_list = [wfo]
+    server_vars.write("wfo_list", wfo_list, ctx.guild_id)
+    await ctx.respond(f"Added {wfo} to the WFO list.")
+
+
+@settings.command(
+    name="show",
+    description="Show current settings",
+)
+@guild_only()
+async def show_settings(ctx: discord.ApplicationContext):
+    await ctx.defer()
+    alert_channel = server_vars.get("monitor_channel", ctx.guild_id)
+    alert_exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
+    wfo_exclusions = server_vars.get("exclude_wfos", ctx.guild_id)
+    wfo_list = server_vars.get("wfo_list", ctx.guild_id)
+    if alert_channel is not None:
+        alert_channel = f"<#{alert_channel}>"
+    if wfo_list is None:
+        wfo_list = "Any"
+    await ctx.respond(
+        f"# Settings\n\
+Alert channel: {alert_channel}\n\
+Excluded alerts: {alert_exclusions}\n\
+Excluded WFOs: {wfo_exclusions}\n\
+Monitoring WFOs: {wfo_list}\n\
+Uptime: {process_uptime_human_readable()}"
+    )

@@ -10,7 +10,7 @@ def process_uptime():
 
 
 def process_uptime_human_readable():
-    t_uptime = math.floor(process_uptime())
+    t_uptime = int(process_uptime())
     days = t_uptime // 86400
     hours = t_uptime % 86400 // 3600
     minutes = t_uptime % 3600 // 60
