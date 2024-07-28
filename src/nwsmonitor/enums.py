@@ -234,7 +234,7 @@ class AlertType(Enum):
     SSA = "Storm Surge Watch"
     STORM_W = "Storm Warning"
     STORM_A = "Storm Watch"
-    TEST = "Test"
+    TEST = "Test Message"
     TOR = "Tornado Warning"
     TOA = "Tornado Watch"
     TDLS = "Tropical Depression Local Statement"
@@ -256,6 +256,16 @@ class AlertType(Enum):
     WSW = "Winter Storm Warning"
     WSA = "Winter Storm Watch"
     WSY = "Winter Weather Advisory"
+
+
+class SpecialAlert(Enum):
+    """Specialized alert types which are sub-types of other alerts.
+    These are often used to indicate a particularly dangerous situation.
+    """
+
+    PDS_TOR = "**Tornado Warning (PDS)**"
+    TOR_E = "**TORNADO EMERGENCY**"
+    FFW_E = "**FLASH FLOOD EMERGENCY**"
 
 
 MARINE_ALERTS = {
@@ -287,4 +297,5 @@ REQUIRED_ALERTS = {
     AlertType.BZW,
     AlertType.LEW,
     AlertType.LAE,
+    AlertType.EWW,
 }

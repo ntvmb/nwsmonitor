@@ -20,6 +20,7 @@ from discord.ext import tasks, commands
 from . import aio_nws as nws
 from . import server_vars
 from . import global_vars
+from .enums import *
 from .uptime import process_uptime_human_readable
 from .dir_calc import get_dir
 from io import StringIO, BytesIO
@@ -165,7 +166,7 @@ class NWSMonitor(commands.Cog):
                 alerts_list["parameters"],
                 alerts_list["expires"],
             ):
-                if i not in prev_ids_array and ev != "Test Message":
+                if i not in prev_ids_array and ev != AlertType.TEST:
                     new_alerts.append(
                         {
                             "id": i,
@@ -265,7 +266,7 @@ async def send_alerts(
             end = alert[4]
             _log.debug(f"{desc=}")
             _log.debug(f"{inst=}")
-            if event == "Test Message":
+            if event == AlertType.TEST:
                 continue
             if m_type == "Alert":
                 m_verb = "issues"
@@ -311,12 +312,12 @@ async def send_alerts(
             except KeyError:
                 ff_damage_threat = None
 
-            if event == "Tornado Warning" and tor_damage_threat == "CONSIDERABLE":
-                event = "Tornado Warning (PDS)"
-            elif event == "Tornado Warning" and tor_damage_threat == "CATASTROPHIC":
-                event = "Tornado Emergency"
-            elif event == "Flash Flood Warning" and ff_damage_threat == "CATASTROPHIC":
-                event = "Flash Flood Emergency"
+            if event == AlertType.TOR and tor_damage_threat == "CONSIDERABLE":
+                event = SpecialAlert.PDS_TOR
+            elif event == AlertType.TOR and tor_damage_threat == "CATASTROPHIC":
+                event = SpecialAlert.TOR_E
+            elif event == AlertType.FFW and ff_damage_threat == "CATASTROPHIC":
+                event = SpecialAlert.FFW_E
 
             with StringIO() as ss:
                 ss.write(f"{sender_name} {m_verb} {event} ")
