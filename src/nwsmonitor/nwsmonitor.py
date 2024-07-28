@@ -166,7 +166,7 @@ class NWSMonitor(commands.Cog):
                 alerts_list["parameters"],
                 alerts_list["expires"],
             ):
-                if i not in prev_ids_array and ev != AlertType.TEST:
+                if i not in prev_ids_array and ev != AlertType.TEST.value:
                     new_alerts.append(
                         {
                             "id": i,
@@ -266,7 +266,7 @@ async def send_alerts(
             end = alert[4]
             _log.debug(f"{desc=}")
             _log.debug(f"{inst=}")
-            if event == AlertType.TEST:
+            if event == AlertType.TEST.value:
                 continue
             if m_type == "Alert":
                 m_verb = "issues"
@@ -312,12 +312,12 @@ async def send_alerts(
             except KeyError:
                 ff_damage_threat = None
 
-            if event == AlertType.TOR and tor_damage_threat == "CONSIDERABLE":
-                event = SpecialAlert.PDS_TOR
-            elif event == AlertType.TOR and tor_damage_threat == "CATASTROPHIC":
-                event = SpecialAlert.TOR_E
-            elif event == AlertType.FFW and ff_damage_threat == "CATASTROPHIC":
-                event = SpecialAlert.FFW_E
+            if event == AlertType.TOR.value and tor_damage_threat == "CONSIDERABLE":
+                event = SpecialAlert.PDS_TOR.value
+            elif event == AlertType.TOR.value and tor_damage_threat == "CATASTROPHIC":
+                event = SpecialAlert.TOR_E.value
+            elif event == AlertType.FFW.value and ff_damage_threat == "CATASTROPHIC":
+                event = SpecialAlert.FFW_E.value
 
             with StringIO() as ss:
                 ss.write(f"{sender_name} {m_verb} {event} ")
