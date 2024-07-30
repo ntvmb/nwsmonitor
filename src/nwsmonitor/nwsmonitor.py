@@ -403,7 +403,8 @@ async def send_alerts(
                 if len(text) > 4000:
                     await channel.send(
                         f"NWSMonitor tried to send a message that was too long. \
-Here's a shortened version:\n{head}"
+Here's a shortened version:\n{head}",
+                        file=discord.File(fp),
                     )
                 else:
                     await channel.send(text, file=discord.File(fp))
