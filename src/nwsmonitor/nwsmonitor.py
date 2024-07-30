@@ -226,6 +226,7 @@ class NWSMonitor(commands.Cog):
             "An error occurred while getting or sending alerts.",
             exc_info=(type(error), error, error.__traceback__),
         )
+        self.update_alerts.restart()
 
 
 async def _write_alerts_list(
@@ -281,6 +282,7 @@ async def send_alerts(
             areas = alert[1]
             exp = alert[12]
             end = alert[4]
+            head = alert[8]
             _log.debug(f"{desc=}")
             _log.debug(f"{inst=}")
             if event == AlertType.TEST.value:
@@ -398,7 +400,13 @@ async def send_alerts(
                 if inst:
                     await b.write(f"{inst}\n\n")
             with open(f"alert{i}.txt", "rb") as fp:
-                await channel.send(text, file=discord.File(fp))
+                if len(text) > 4000:
+                    await channel.send(
+                        f"NWSMonitor tried to send a message that was too long. \
+Here's a shortened version:\n{head}"
+                    )
+                else:
+                    await channel.send(text, file=discord.File(fp))
 
 
 @bot.slash_command(name="ping", description="Pong!")
