@@ -387,7 +387,13 @@ async def send_alerts(
                 if sent != onset and onset is not None:
                     onset = int(datetime.datetime.fromisoformat(onset).timestamp())
                     ss.write(f"valid <t:{onset}:f> ")
-                ss.write(f"for {areas} ")
+                if (
+                    m_verb == ValidTimeEventCodeVerb.EXA.value
+                    or m_verb == ValidTimeEventCodeVerb.EXB
+                ):
+                    ss.write(f"to include {areas} ")
+                else:
+                    ss.write(f"for {areas} ")
                 if not (
                     m_verb == ValidTimeEventCodeVerb.CAN.value
                     or m_verb == ValidTimeEventCodeVerb.UPG.value
