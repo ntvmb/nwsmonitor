@@ -391,6 +391,7 @@ async def send_alerts(
                 if not (
                     m_verb == ValidTimeEventCodeVerb.CAN.value
                     or m_verb == ValidTimeEventCodeVerb.UPG.value
+                    or m_verb == ValidTimeEventCodeVerb.EXP.value
                 ):
                     if end is not None:
                         end = int(datetime.datetime.fromisoformat(end).timestamp())
@@ -400,6 +401,8 @@ async def send_alerts(
                         ss.write(f"until <t:{exp}:f>.")
                     else:
                         ss.write(f"until further notice.")
+                ss.seek(ss.tell() - 1)
+                ss.write(".")
                 text = ss.getvalue()
             try:
                 nws_head = params["NWSheadline"][0]
