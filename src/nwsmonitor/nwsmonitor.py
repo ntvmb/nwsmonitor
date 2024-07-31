@@ -24,7 +24,7 @@ from .enums import *
 from .uptime import process_uptime_human_readable
 from .dir_calc import get_dir
 from io import StringIO, BytesIO
-from pandas import DataFrame
+from pandas import DataFrame, concat
 from typing import Dict, List, Any, Optional
 from sys import exit
 
@@ -140,6 +140,10 @@ class NWSMonitor(commands.Cog):
     async def update_alerts(self):
         prev_alerts_list = global_vars.get("prev_alerts_list")
         alerts_list = await nws.alerts()
+        cancelled_alerts = await nws.alerts(
+            active=False, message_type="cancel", limit=200
+        )
+        alerts_list = concat((alerts_list, cancelled_alerts))
         new_alerts = []
         if prev_alerts_list is None:
             async with aiofiles.open("alerts_.txt", "w") as fp:
@@ -287,12 +291,20 @@ async def send_alerts(
             _log.debug(f"{inst=}")
             if event == AlertType.TEST.value:
                 continue
-            if m_type == "Alert":
-                m_verb = "issues"
-            elif m_type == "Update":
-                m_verb = "updates"
+
+            try:
+                vtec = params["VTEC"][0].strip("/").split(".")
+            except (KeyError, AttributeError):
+                vtec = None
+            if vtec is not None:
+                m_verb = ValidTimeEventCodeVerb[vtec[1]].value
             else:
-                m_verb = "cancels"
+                if m_type == "Alert":
+                    m_verb = ValidTimeEventCodeVerb.NEW.value
+                elif m_type == "Update":
+                    m_verb = ValidTimeEventCodeVerb.default.value
+                else:
+                    m_verb = ValidTimeEventCodeVerb.CAN.value
 
             try:
                 tornado = params["tornadoDetection"][0]
@@ -372,18 +384,22 @@ async def send_alerts(
                         ss.write(", ")
                     ss.seek(ss.tell() - 2)  # go back 2 characters
                     ss.write(") ")
-                if sent != onset and onset is not None:
-                    onset = int(datetime.datetime.fromisoformat(onset).timestamp())
-                    ss.write(f"valid <t:{onset}:f> ")
-                if end is not None:
-                    end = int(datetime.datetime.fromisoformat(end).timestamp())
-                    ss.write(f"until <t:{end}:f> ")
-                elif exp is not None:
-                    exp = int(datetime.datetime.fromisoformat(exp).timestamp())
-                    ss.write(f"until <t:{exp}:f> ")
-                else:
-                    ss.write(f"until further notice ")
-                ss.write(f"for {areas}.")
+                ss.write(f"for {areas} ")
+                if not (
+                    m_verb == ValidTimeEventCodeVerb.CAN.value
+                    or m_verb == ValidTimeEventCodeVerb.UPG.value
+                ):
+                    if sent != onset and onset is not None:
+                        onset = int(datetime.datetime.fromisoformat(onset).timestamp())
+                        ss.write(f"valid <t:{onset}:f>.")
+                    if end is not None:
+                        end = int(datetime.datetime.fromisoformat(end).timestamp())
+                        ss.write(f"until <t:{end}:f>.")
+                    elif exp is not None:
+                        exp = int(datetime.datetime.fromisoformat(exp).timestamp())
+                        ss.write(f"until <t:{exp}:f>.")
+                    else:
+                        ss.write(f"until further notice.")
                 text = ss.getvalue()
             try:
                 nws_head = params["NWSheadline"][0]

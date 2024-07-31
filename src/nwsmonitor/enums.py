@@ -269,6 +269,26 @@ class SpecialAlert(Enum):
     FFW_E = "**FLASH FLOOD EMERGENCY**"
 
 
+class ValidTimeEventCodeVerb(Enum):
+    """Verbs that correspond to alert statuses given a Valid Time Event
+    Code (VTEC).
+    """
+
+    NEW = "issues"
+    UPG = "upgrades"
+    CON = "continues"
+    CAN = "cancels"
+    EXA = "expands area of"
+    EXB = "extends time and expands area of"
+    EXT = "extends time of"
+    EXP = "expires"
+    default = "updates"
+
+    @classmethod
+    def _missing_(cls, value):
+        return default
+
+
 MARINE_ALERTS = {
     AlertType.BWY,
     AlertType.F_SPRAY_Y,
