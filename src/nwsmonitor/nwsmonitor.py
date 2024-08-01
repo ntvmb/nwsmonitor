@@ -131,17 +131,19 @@ class NWSMonitor(commands.Cog):
         self.bot = bot
         _log.info("Starting monitor...")
         self.update_alerts.start()
+        self.update_spc_feeds.start()
 
     def cog_unload(self):
         _log.info("Stopping monitor...")
         self.update_alerts.cancel()
+        self.update_spc_feeds.cancel()
 
     @tasks.loop(minutes=1)
     async def update_alerts(self):
         prev_alerts_list = global_vars.get("prev_alerts_list")
         alerts_list = await nws.alerts()
         cancelled_alerts = await nws.alerts(
-            active=False, message_type="cancel", limit=200
+            active=False, message_type="cancel", limit=100
         )
         alerts_list = concat((alerts_list, cancelled_alerts))
         new_alerts = []
@@ -232,10 +234,94 @@ class NWSMonitor(commands.Cog):
         )
         self.update_alerts.restart()
 
+    @tasks.loop(minutes=1)
+    async def update_spc_feeds(self):
+        prev_spc_feed = global_vars.get("prev_spc_feed")
+        prev_wpc_feed = global_vars.get("prev_wpc_feed")
+        spc_feed = await nws.spc.fetch_spc_feed()
+        wpc_feed = await nws.spc.fetch_wpc_feed()
+        if prev_spc_feed is None or prev_wpc_feed is None:
+            global_vars.write("prev_spc_feed", spc_feed.to_dict("list"))
+            global_vars.write("prev_wpc_feed", wpc_feed.to_dict("list"))
+            return
+        new_articles_spc = []
+        new_articles_wpc = []
+        prev_spc_feed = DataFrame(prev_spc_feed)
+        prev_wpc_feed = DataFrame(prev_wpc_feed)
+        prev_dates_array_spc = prev_spc_feed["pubdate"].array
+        for t, l, de, da in zip(
+            spc_feed["title"],
+            spc_feed["link"],
+            spc_feed["description"],
+            spc_feed["pubdate"],
+        ):
+            if da not in prev_dates_array_spc:
+                new_articles_spc.append(
+                    {
+                        "title": t,
+                        "link": l,
+                        "description": de,
+                        "pubdate": da,
+                    }
+                )
+        new_articles_spc = DataFrame(new_articles_spc)
+        if new_articles_spc.empty:
+            _log.info("No SPC articles to send.")
+        prev_dates_array_wpc = prev_wpc_feed["pubdate"].array
+        for t, l, de, da in zip(
+            wpc_feed["title"],
+            wpc_feed["link"],
+            wpc_feed["description"],
+            wpc_feed["pubdate"],
+        ):
+            if da not in prev_dates_array_wpc:
+                new_articles_wpc.append(
+                    {
+                        "title": t,
+                        "link": l,
+                        "description": de,
+                        "pubdate": da,
+                    }
+                )
+        new_articles_wpc = DataFrame(new_articles_wpc)
+        if new_articles_wpc.empty:
+            _log.info("No WPC articles to send.")
+        for guild in self.bot.guilds:
+            channel_id = server_vars.get("spc_channel", guild.id)
+            if len(new_articles_spc) > 5:
+                async with aiofiles.open("articles.txt", "w") as fp:
+                    await _write_article_list(fp, new_articles_spc)
+                if channel_id is not None:
+                    await send_articles(
+                        guild.id, channel_id, article_count=len(new_articles_spc)
+                    )
+            else:
+                if channel_id is not None:
+                    await send_articles(guild.id, channel_id, new_articles_spc)
+            channel_id = server_vars.get("wpc_channel", guild.id)
+            if len(new_articles_wpc) > 5:
+                async with aiofiles.open("articles.txt", "w") as fp:
+                    await _write_article_list(fp, new_articles_wpc)
+                if channel_id is not None:
+                    await send_articles(
+                        guild.id, channel_id, article_count=len(new_articles_wpc)
+                    )
+            else:
+                if channel_id is not None:
+                    await send_articles(guild.id, channel_id, new_articles_wpc)
+        global_vars.write("prev_spc_feed", spc_feed.to_dict("list"))
+        global_vars.write("prev_wpc_feed", wpc_feed.to_dict("list"))
 
-async def _write_alerts_list(
-    fp: aiofiles.threadpool.AiofilesContextManager, al: DataFrame
-):
+    @update_spc_feeds.error
+    async def on_spc_update_error(self, error: Exception):
+        _log.exception(
+            "An exception occurred while getting or sending articles.",
+            exc_info=(type(error), error, error.__traceback__),
+        )
+        self.update_spc_feeds.restart()
+
+
+async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: DataFrame):
     for head, params, desc, inst in zip(
         al["headline"],
         al["parameters"],
@@ -267,6 +353,8 @@ async def send_alerts(
 ):
     _log.info(f"Sending alerts to guild {guild_id}...")
     channel = bot.get_channel(to_channel)
+    if channel is None:
+        return
     if alerts is None:
         with open("alerts_.txt", "rb") as fp:
             await channel.send(
@@ -433,6 +521,41 @@ Here's a shortened version:\n{head}",
                     )
                 else:
                     await channel.send(text, file=discord.File(fp))
+
+
+async def _write_article_list(
+    fp: aiofiles.threadpool.AiofilesContextManager, al: DataFrame
+):
+    for t, l, d in zip(al["title"], al["link"], al["pubdate"]):
+        await fp.write(f"{d}\n{t}\n{l}\n\n")
+
+
+async def send_articles(
+    guild_id: int,
+    to_channel: int,
+    articles: Optional[DataFrame] = None,
+    article_count: Optional[int] = 0,
+):
+    _log.info(f"Sending articles to channel {to_channel}...")
+    channel = bot.get_channel(to_channel)
+    if channel is None:
+        return
+    if articles is None:
+        with open("articles.txt", "rb") as fp:
+            await channel.send(
+                f"{article_count} articles were sent.",
+                file=discord.File(fp),
+            )
+    else:
+        for i, article in enumerate(articles.to_numpy()):
+            title = article[0]
+            link = article[1]
+            desc = article[2]
+            date = article[3]
+            async with aiofiles.open(f"article{i}.txt", "w") as b:
+                await b.write(desc)
+            with open(f"article{i}.txt", "rb") as fp:
+                await channel.send(f"{title}\n{link}", file=discord.File(fp))
 
 
 @bot.slash_command(name="ping", description="Pong!")
@@ -667,7 +790,7 @@ If looking for older alerts, try using the \
 )
 @guild_only()
 @commands.has_guild_permissions(manage_channels=True)
-async def alert_channel(
+async def set_alert_channel(
     ctx: discord.ApplicationContext,
     channel: Option(discord.TextChannel, description="The channel to use"),
 ):
@@ -812,18 +935,66 @@ async def only_from_wfo(
 async def show_settings(ctx: discord.ApplicationContext):
     await ctx.defer()
     alert_channel = server_vars.get("monitor_channel", ctx.guild_id)
+    spc_channel = server_vars.get("spc_channel", ctx.guild_id)
+    wpc_channel = server_vars.get("wpc_channel", ctx.guild_id)
     alert_exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
     wfo_exclusions = server_vars.get("exclude_wfos", ctx.guild_id)
     wfo_list = server_vars.get("wfo_list", ctx.guild_id)
     if alert_channel is not None:
         alert_channel = f"<#{alert_channel}>"
+    if spc_channel is not None:
+        spc_channel = f"<#{spc_channel}>"
+    if wpc_channel is not None:
+        wpc_channel = f"<#{wpc_channel}>"
     if wfo_list is None:
         wfo_list = "Any"
     await ctx.respond(
         f"# Settings\n\
 Alert channel: {alert_channel}\n\
+SPC channel: {spc_channel}\n\
+WPC channel: {wpc_channel}\n\
 Excluded alerts: {alert_exclusions}\n\
 Excluded WFOs: {wfo_exclusions}\n\
 Monitoring WFOs: {wfo_list}\n\
 Uptime: {process_uptime_human_readable()}"
     )
+
+
+@settings.command(
+    name="spc_channel", description="Set the channel to send SPC products to"
+)
+@guild_only()
+@commands.has_guild_permissions(manage_channels=True)
+async def set_spc_channel(
+    ctx: discord.ApplicationContext,
+    channel: Option(discord.TextChannel, description="The channel to use"),
+):
+    await ctx.defer(ephemeral=True)
+    if channel.permissions_for(ctx.me).send_messages:
+        server_vars.write("spc_channel", channel.id, ctx.guild_id)
+        await ctx.respond(f"Successfully set the SPC channel to {channel}!")
+    else:
+        await ctx.respond(
+            f"I cannot send messages to that channel.\n\
+Give me permission to post in said channel, or use a different channel."
+        )
+
+
+@settings.command(
+    name="wpc_channel", description="Set the channel to send WPC products to"
+)
+@guild_only()
+@commands.has_guild_permissions(manage_channels=True)
+async def set_wpc_channel(
+    ctx: discord.ApplicationContext,
+    channel: Option(discord.TextChannel, description="The channel to use"),
+):
+    await ctx.defer(ephemeral=True)
+    if channel.permissions_for(ctx.me).send_messages:
+        server_vars.write("wpc_channel", channel.id, ctx.guild_id)
+        await ctx.respond(f"Successfully set the WPC channel to {channel}!")
+    else:
+        await ctx.respond(
+            f"I cannot send messages to that channel.\n\
+Give me permission to post in said channel, or use a different channel."
+        )
