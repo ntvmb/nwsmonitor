@@ -486,11 +486,12 @@ async def send_alerts(
                     m_verb == ValidTimeEventCodeVerb.CAN.value
                     or m_verb == ValidTimeEventCodeVerb.UPG.value
                     or m_verb == ValidTimeEventCodeVerb.EXP.value
+                    or event in STR_ALERTS_WITH_NO_END_TIME
                 ):
                     if end is not None:
                         end = int(datetime.datetime.fromisoformat(end).timestamp())
                         ss.write(f"until <t:{end}:f>.")
-                    elif exp is not None:
+                    elif event == AlertType.SPS.value or event == AlertType.MWS.value:
                         exp = int(datetime.datetime.fromisoformat(exp).timestamp())
                         ss.write(f"until <t:{exp}:f>.")
                     else:

@@ -195,7 +195,7 @@ class AlertType(Enum):
     HWA = "High Wind Watch"
     FORCE_12_W = "Hurricane Force Wind Warning"
     FORCE_12_A = "Hurricane Force Wind Watch"
-    HLS = "Hurricane Local Statement"
+    HLS = "Tropical Cyclone Statement"
     HUW = "Hurricane Warning"
     HUA = "Hurricane Watch"
     HYDRO_ADV = "Hydrologic Advisory"
@@ -237,8 +237,6 @@ class AlertType(Enum):
     TEST = "Test Message"
     TOR = "Tornado Warning"
     TOA = "Tornado Watch"
-    TDLS = "Tropical Depression Local Statement"
-    TRLS = "Tropical Storm Local Statement"
     TRW = "Tropical Storm Warning"
     TRA = "Tropical Storm Watch"
     TSY = "Tsunami Advisory"
@@ -320,3 +318,26 @@ REQUIRED_ALERTS = {
     AlertType.LAE,
     AlertType.EWW,
 }
+ALERTS_WITH_NO_END_TIME = {
+    AlertType.TRA,
+    AlertType.TRW,
+    AlertType.SSA,
+    AlertType.SSW,
+    AlertType.HUA,
+    AlertType.HUW,
+    AlertType.HLS,
+    AlertType.HWO,
+    AlertType.ESF,
+    AlertType.CEM,
+    AlertType.CAE,
+    AlertType.CDW,
+    AlertType.LEW,
+    AlertType.LAE,
+    AlertType.EVI,
+    AlertType.HMW,
+    AlertType.NUW,
+    AlertType.RHW,
+    AlertType.SPW,
+    AlertType.FRW,
+}
+STR_ALERTS_WITH_NO_END_TIME = {a.value for a in ALERTS_WITH_NO_END_TIME}
