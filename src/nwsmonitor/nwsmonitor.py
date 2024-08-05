@@ -491,7 +491,11 @@ async def send_alerts(
                     if end is not None:
                         end = int(datetime.datetime.fromisoformat(end).timestamp())
                         ss.write(f"until <t:{end}:f>.")
-                    elif event == AlertType.SPS.value or event == AlertType.MWS.value:
+                    elif (
+                        event == AlertType.SPS.value
+                        or event == AlertType.MWS.value
+                        or event == AlertType.AQA.value
+                    ):
                         exp = int(datetime.datetime.fromisoformat(exp).timestamp())
                         ss.write(f"until <t:{exp}:f>.")
                     else:
