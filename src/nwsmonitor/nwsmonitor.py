@@ -477,7 +477,7 @@ async def send_alerts(
                     ss.write(f"valid <t:{onset}:f> ")
                 if (
                     m_verb == ValidTimeEventCodeVerb.EXA.value
-                    or m_verb == ValidTimeEventCodeVerb.EXB
+                    or m_verb == ValidTimeEventCodeVerb.EXB.value
                 ):
                     ss.write(f"to include {areas} ")
                 else:
