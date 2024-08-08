@@ -459,6 +459,7 @@ async def send_alerts(
                     or max_wind is not None
                     or max_hail is not None
                     or flash_flood is not None
+                    or ff_damage_threat is not None
                     or tstm_damage_threat is not None
                 ):
                     ss.write("(")
