@@ -139,6 +139,7 @@ class AlertType(Enum):
     AVW = "Avalanche Warning"
     AVA = "Avalanche Watch"
     BHS = "Beach Hazards Statement"
+    BLU = "Blue Alert"
     BZW = "Blizzard Warning"
     BZA = "Blizzard Watch"
     BDY = "Blowing Dust Advisory"
@@ -341,3 +342,59 @@ ALERTS_WITH_NO_END_TIME = {
     AlertType.FRW,
 }
 STR_ALERTS_WITH_NO_END_TIME = {a.value for a in ALERTS_WITH_NO_END_TIME}
+DEFAULT_EMOJI = {
+    AlertType.ADR.value: ":newspaper:",
+    AlertType.AVY.value: ":mountain_snow:",
+    AlertType.AVA.value: ":mountain_snow:",
+    AlertType.AVW.value: ":mountain_snow:",
+    AlertType.BHS.value: ":beach:",
+    AlertType.BLU.value: ":blue_square",
+    AlertType.BZW.value: ":bangbang: :cloud_snow:",
+    AlertType.BZA.value: ":exclamation: :cloud_snow:",
+    AlertType.CAE.value: ":orange_square:",
+    AlertType.FOG.value: ":fog:",
+    AlertType.SMOKE.value: ":fog:",
+    AlertType.EHW.value: ":hot_face:",
+    AlertType.EHA.value: ":sunny:",
+    AlertType.EWW.value: ":bangbang: :wind_face:",
+    AlertType.FRW.value: ":fire:",
+    AlertType.FWA.value: ":triangular_flag_on_post:",
+    AlertType.FFW.value: ":cloud_rain:",
+    SpecialAlert.FFW_E.value: ":bangbang: :cloud_rain:",
+    AlertType.HTY.value: ":sunny:",
+    AlertType.HWW.value: ":exclamation: :wind_face:",
+    AlertType.HWA.value: ":wind_face:",
+    AlertType.HLS.value: ":cyclone:",
+    AlertType.HUW.value: ":cyclone:",
+    AlertType.HUA.value: ":cyclone:",
+    AlertType.ESF.value: ":bar_chart:",
+    AlertType.ICE.value: ":exclamation: :ice_cube:",
+    AlertType.LAKE_WIND.value: ":wind_face:",
+    AlertType.LEW.value: ":rotating_light:",
+    AlertType.RHW.value: ":biohazard:",
+    AlertType.RFW.value: ":triangular_flag_on_post:",
+    AlertType.SVR.value: ":cloud_lightning:",
+    SpecialAlert.PDS_SVR.value: ":exclamation: :cloud_lightning:",
+    AlertType.SVA.value: ":cloud:",
+    AlertType.NOW.value: ":bar_chart:",
+    AlertType.SQW.value: ":wind_face: :cloud_snow:",
+    AlertType.TOR.value: ":cloud_tornado:",
+    SpecialAlert.PDS_TOR.value: ":exclamation: :cloud_tornado:",
+    SpecialAlert.TOR_E.value: ":bangbang: :cloud_tornado:",
+    AlertType.TRW.value: ":cyclone:",
+    AlertType.TRA.value: ":cyclone:",
+    AlertType.TSY.value: ":exclamation: :ocean:",
+    AlertType.TSA.value: ":ocean:",
+    AlertType.TSW.value: ":bangbang: :ocean:",
+    AlertType.TYLS.value: ":cyclone:",
+    AlertType.TYW.value: ":cyclone:",
+    AlertType.TYA.value: ":cyclone:",
+    AlertType.VOW.value: ":volcano:",
+    AlertType.WIND.value: ":wind_face:",
+    AlertType.WCY.value: ":cold_face:",
+    AlertType.WCA.value: ":exclamation: :cold_face:",
+    AlertType.WCW.value: ":bangbang: :cold_face:",
+    AlertType.WSW.value: ":cloud_snow:",
+    AlertType.WSA.value: ":exclamation: :snowflake:",
+    AlertType.WSY.value: ":snowflake:",
+}

@@ -345,6 +345,14 @@ async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: Dat
         await fp.write("$$\n\n")
 
 
+def is_not_in_effect(verb: str) -> bool:
+    return (
+        verb == ValidTimeEventCodeVerb.CAN.value
+        or verb == ValidTimeEventCodeVerb.UPG.value
+        or verb == ValidTimeEventCodeVerb.EXP.value
+    )
+
+
 async def send_alerts(
     guild_id: int,
     to_channel: int,
@@ -439,9 +447,13 @@ async def send_alerts(
                 event = SpecialAlert.FFW_E.value
             elif event == AlertType.SVR.value and tstm_damage_threat == "DESTRUCTIVE":
                 event = SpecialAlert.PDS_SVR.value
+            emoji = DEFAULT_EMOJI.get(event, ":warning:")
 
             with StringIO() as ss:
-                ss.write(f"{sender_name} {m_verb} {event} ")
+                ss.write(f"{sender_name} {m_verb} ")
+                if not is_not_in_effect(m_verb):
+                    ss.write(f"{emoji} ")
+                ss.write(f"{event} ")
                 if (
                     tornado is not None
                     or max_wind is not None
@@ -483,10 +495,7 @@ async def send_alerts(
                 else:
                     ss.write(f"for {areas} ")
                 if not (
-                    m_verb == ValidTimeEventCodeVerb.CAN.value
-                    or m_verb == ValidTimeEventCodeVerb.UPG.value
-                    or m_verb == ValidTimeEventCodeVerb.EXP.value
-                    or event in STR_ALERTS_WITH_NO_END_TIME
+                    is_not_in_effect(m_verb) or event in STR_ALERTS_WITH_NO_END_TIME
                 ):
                     if end is not None:
                         end = int(datetime.datetime.fromisoformat(end).timestamp())
