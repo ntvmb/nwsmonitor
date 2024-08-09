@@ -161,6 +161,7 @@ class NWSMonitor(commands.Cog):
             prev_ids_array = prev_alerts_list["id"].array
             for guild in self.bot.guilds:
                 new_alerts = []
+                emergencies = []
                 excluded_alerts = server_vars.get("exclude_alerts", guild.id)
                 excluded_wfos = server_vars.get("exclude_wfos", guild.id)
                 wfo_list = server_vars.get("wfo_list", guild.id)
@@ -192,38 +193,41 @@ class NWSMonitor(commands.Cog):
                         )
                         and (not (wfo_list) or sn in wfo_list)
                     ):
-                        new_alerts.append(
-                            {
-                                "id": i,
-                                "areaDesc": ad,
-                                "sent": se,
-                                "onset": o,
-                                "ends": en,
-                                "messageType": mt,
-                                "event": ev,
-                                "senderName": sn,
-                                "headline": hl,
-                                "description": d,
-                                "instruction": ins,
-                                "parameters": p,
-                                "expires": ex,
-                            }
-                        )
+                        entry = {
+                            "id": i,
+                            "areaDesc": ad,
+                            "sent": se,
+                            "onset": o,
+                            "ends": en,
+                            "messageType": mt,
+                            "event": ev,
+                            "senderName": sn,
+                            "headline": hl,
+                            "description": d,
+                            "instruction": ins,
+                            "parameters": p,
+                            "expires": ex,
+                        }
+                        if is_emergency(p):
+                            emergencies.append(entry)
+                        else:
+                            new_alerts.append(entry)
                 new_alerts = DataFrame(new_alerts)
+                emergencies = DataFrame(emergencies)
                 _log.debug(f"New alerts: {new_alerts}")
-                # avoid rate limiting
-                if len(new_alerts) > 5:
-                    async with aiofiles.open("alerts_.txt", "w") as fp:
-                        await _write_alerts_list(fp, new_alerts)
-                    channel_id = server_vars.get("monitor_channel", guild.id)
-                    if channel_id is not None:
+                _log.debug(f"New emergencies: {emergencies}")
+                channel_id = server_vars.get("monitor_channel", guild.id)
+                if channel_id is not None:
+                    # avoid rate limiting
+                    if len(new_alerts) > 5:
+                        async with aiofiles.open("alerts_.txt", "w") as fp:
+                            await _write_alerts_list(fp, new_alerts)
                         await send_alerts(
                             guild.id, channel_id, alert_count=len(new_alerts)
                         )
-                else:
-                    channel_id = server_vars.get("monitor_channel", guild.id)
-                    if channel_id is not None:
+                    else:
                         await send_alerts(guild.id, channel_id, new_alerts)
+                    await send_alerts(guild.id, channel_id, emergencies)
         global_vars.write("prev_alerts_list", alerts_list.to_dict("list"))
 
     @update_alerts.error
@@ -319,6 +323,12 @@ class NWSMonitor(commands.Cog):
             exc_info=(type(error), error, error.__traceback__),
         )
         self.update_spc_feeds.restart()
+
+
+def is_emergency(params: dict):
+    tor_damage_threat = params.get("tornadoDamageThreat", [""])[0]
+    ff_damage_threat = params.get("flashFloodDamageThreat", [""])[0]
+    return tor_damage_threat == "CATASTROPHIC" or ff_damage_threat == "CATASTROPHIC"
 
 
 async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: DataFrame):
