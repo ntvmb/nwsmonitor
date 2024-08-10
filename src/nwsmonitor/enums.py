@@ -128,7 +128,7 @@ class WFO(Enum):
 
 class AlertType(Enum):
     # NOT ALL EVENT CODES LISTED ARE OFFICIAL
-    TOE = "911 Telephone Outage Emergency"
+    TOE = "911 Telephone Outage"
     ADR = "Administrative Message"
     AQA = "Air Quality Alert"
     ASA = "Air Stagnation Advisory"
@@ -340,6 +340,8 @@ ALERTS_WITH_NO_END_TIME = {
     AlertType.RHW,
     AlertType.SPW,
     AlertType.FRW,
+    AlertType.TOE,
+    AlertType.NOW,
 }
 STR_ALERTS_WITH_NO_END_TIME = {a.value for a in ALERTS_WITH_NO_END_TIME}
 DEFAULT_EMOJI = {
@@ -397,4 +399,6 @@ DEFAULT_EMOJI = {
     AlertType.WSW.value: ":cloud_snow:",
     AlertType.WSA.value: ":exclamation: :snowflake:",
     AlertType.WSY.value: ":snowflake:",
+    AlertType.H_SURF_Y.value: ":surfer:",
+    AlertType.H_SURF_W.value: ":exclamation: :surfer:",
 }
