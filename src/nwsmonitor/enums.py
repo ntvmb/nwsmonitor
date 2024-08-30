@@ -281,6 +281,7 @@ class ValidTimeEventCodeVerb(Enum):
     EXB = "extends time and expands area of"
     EXT = "extends time of"
     EXP = "expires"
+    COR = "corrects"
     default = "updates"
 
     @classmethod
