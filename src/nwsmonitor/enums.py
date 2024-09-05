@@ -286,7 +286,7 @@ class ValidTimeEventCodeVerb(Enum):
 
     @classmethod
     def _missing_(cls, value):
-        return default
+        return cls.default
 
 
 MARINE_ALERTS = {

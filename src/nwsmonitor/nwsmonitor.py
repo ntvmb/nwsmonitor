@@ -506,7 +506,9 @@ async def send_alerts(
                 else:
                     ss.write(f"for {areas} ")
                 if not (
-                    is_not_in_effect(m_verb) or event in STR_ALERTS_WITH_NO_END_TIME
+                    is_not_in_effect(m_verb)
+                    or event in STR_ALERTS_WITH_NO_END_TIME
+                    or not (event in AlertType or event in SpecialAlert)
                 ):
                     if end is not None:
                         end = int(datetime.datetime.fromisoformat(end).timestamp())
@@ -537,6 +539,7 @@ async def send_alerts(
                     await b.write(f"{desc}\n\n")
                 if inst:
                     await b.write(f"{inst}\n\n")
+            # I don't know if discord.File supports aiofiles objects
             with open(f"alert{i}.txt", "rb") as fp:
                 if len(text) > 4000:
                     await channel.send(
