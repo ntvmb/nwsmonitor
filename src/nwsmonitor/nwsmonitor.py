@@ -1031,3 +1031,13 @@ async def set_wpc_channel(
             f"I cannot send messages to that channel.\n\
 Give me permission to post in said channel, or use a different channel."
         )
+
+
+@bot.slash_command(name="purge", description="Clear all cached data")
+@commands.is_owner()
+async def purge(ctx: discord.ApplicationContext):
+    await ctx.defer(ephemeral=True)
+    global_vars.write("prev_alerts_list", None)
+    global_vars.write("prev_spc_feed", None)
+    global_vars.write("prev_wpc_feed", None)
+    await ctx.respond("Cleared cache.")
