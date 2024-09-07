@@ -191,7 +191,8 @@ class NWSMonitor(commands.Cog):
                             or ev in excluded_alerts
                             or ev == AlertType.TEST.value
                         )
-                        and (not (wfo_list) or sn in wfo_list)
+                        and ((not wfo_list) or sn in wfo_list)
+                        and sn in WFO
                     ):
                         entry = {
                             "id": i,
@@ -212,6 +213,10 @@ class NWSMonitor(commands.Cog):
                             emergencies.append(entry)
                         else:
                             new_alerts.append(entry)
+                    if sn not in WFO:
+                        _log.warn(
+                            f"Unknown WFO {sn} in alert {i}. Ignoring this alert."
+                        )
                 new_alerts = DataFrame(new_alerts)
                 emergencies = DataFrame(emergencies)
                 _log.debug(f"New alerts: {new_alerts}")
