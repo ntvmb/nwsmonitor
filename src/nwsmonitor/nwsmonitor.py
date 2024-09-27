@@ -209,7 +209,7 @@ class NWSMonitor(commands.Cog):
                             "parameters": p,
                             "expires": ex,
                         }
-                        if is_emergency(p):
+                        if is_emergency(p, ev):
                             emergencies.append(entry)
                         else:
                             new_alerts.append(entry)
@@ -330,10 +330,14 @@ class NWSMonitor(commands.Cog):
         self.update_spc_feeds.restart()
 
 
-def is_emergency(params: dict):
+def is_emergency(params: dict, alert_type: Optional[str] = None):
     tor_damage_threat = params.get("tornadoDamageThreat", [""])[0]
     ff_damage_threat = params.get("flashFloodDamageThreat", [""])[0]
-    return tor_damage_threat == "CATASTROPHIC" or ff_damage_threat == "CATASTROPHIC"
+    return (
+        tor_damage_threat == "CATASTROPHIC"
+        or ff_damage_threat == "CATASTROPHIC"
+        or alert_type == AlertType.EWW.value
+    )
 
 
 async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: DataFrame):
