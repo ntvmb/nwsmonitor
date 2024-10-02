@@ -1045,3 +1045,59 @@ async def purge(ctx: discord.ApplicationContext):
     global_vars.write("prev_spc_feed", None)
     global_vars.write("prev_wpc_feed", None)
     await ctx.respond("Cleared cache.")
+
+
+@settings.command(
+    name="bulletin_channel", description="Set the channel for NWSMonitor announcements"
+)
+@guild_only()
+@commands.has_guild_permissions(manage_channels=True)
+async def bulleting_channel(
+    ctx: discord.ApplicationContext,
+    channel: Option(discord.TextChannel, description="The channel to use"),
+):
+    await ctx.defer(ephemeral=True)
+    if channel.permissions_for(ctx.me).send_messages:
+        server_vars.write("bulletin_channel", channel.id, ctx.guild_id)
+        await ctx.respond(f"Successfully set the WPC channel to {channel}!")
+    else:
+        await ctx.respond(
+            f"I cannot send messages to that channel.\n\
+Give me permission to post in said channel, or use a different channel."
+        )
+
+
+async def send_bulletin(
+    message: str,
+    attachment: Optional[discord.File] = None,
+    is_automated: bool = False,
+):
+    if is_automated:
+        message = "(automated message)\n" + message
+    for guild in bot.guilds:
+        channel_id = server_vars.get("bulletin_channel", guild.id)
+        if channel_id is None:
+            continue
+        channel = bot.get_channel(channel_id)
+        if channel is None:
+            continue
+        if attachment is None:
+            await channel.send(message)
+        else:
+            await channel.send(message, file=attachment)
+
+
+@bot.slash_command(name="send_bulletin", description="Announce something")
+@commands.is_owner()
+async def send_bulletin_wrapper(
+    ctx: discord.ApplicationContext,
+    msg: Option(str, "Bulletin text"),
+    file: Option(discord.Attachment, "File for extra info", required=False),
+):
+    await ctx.defer(ephemeral=True)
+    if file is not None:
+        file = await file.to_file()
+        await send_bulletin(msg, file)
+    else:
+        await send_bulletin(msg)
+    await ctx.respond("Bulletin sent!")
