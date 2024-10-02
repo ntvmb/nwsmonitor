@@ -72,6 +72,11 @@ def get_alert_text(*args, **kwargs) -> str:
         return ss.getvalue()
 
 
+def is_civ(params: dict):
+    orig = params.get("EAS-ORG", [""])[0]
+    return orig == "CIV"
+
+
 @bot.event
 async def on_ready():
     watching = discord.Activity(
@@ -212,8 +217,8 @@ class NWSMonitor(commands.Cog):
                             or ev in excluded_alerts
                             or ev == AlertType.TEST.value
                         )
+                        and (is_civ(p) or sn in WFO)
                         and ((not wfo_list) or sn in wfo_list)
-                        and sn in WFO
                     ):
                         entry = {
                             "id": i,
@@ -250,7 +255,7 @@ If you are in the affected area, seek higher ground now!",
                                 )
                         else:
                             new_alerts.append(entry)
-                    if sn not in WFO:
+                    if not (sn in WFO or i in prev_ids_array):
                         _log.warn(
                             f"Unknown WFO {sn} in alert {i}. Ignoring this alert."
                         )
