@@ -1094,10 +1094,32 @@ async def send_bulletin_wrapper(
     msg: Option(str, "Bulletin text"),
     file: Option(discord.Attachment, "File for extra info", required=False),
 ):
-    await ctx.defer(ephemeral=True)
+    try:
+        await ctx.defer(ephemeral=True)
+    except discord.errors.InteractionResponded:
+        pass
     if file is not None:
         file = await file.to_file()
         await send_bulletin(msg, file)
     else:
         await send_bulletin(msg)
     await ctx.respond("Bulletin sent!")
+
+
+@bot.slash_command(
+    name="send_bulletin_from_file", description="Announce something from a file"
+)
+@commands.is_owner()
+async def send_bulletin_from_file(
+    ctx: discord.ApplicationContext,
+    msg: Option(discord.Attachment, "Text file"),
+    extra_file: Option(discord.Attachment, "File for extra info", required=False),
+):
+    await ctx.defer(ephemeral=True)
+    if not msg.content_type.startswith("text"):
+        await ctx.respond("`msg` must be a text file.")
+        return
+
+    msg_text = await msg.read()
+    msg_text = msg_text.decode("UTF-8")
+    await ctx.invoke(send_bulletin_wrapper, msg=msg_text, file=extra_file)
