@@ -51,6 +51,27 @@ def pa_to_inhg(pa: float) -> float:
     return pa * 0.00029529983071445
 
 
+def get_alert_text(*args, **kwargs) -> str:
+    params = kwargs["parameters"]
+    desc = kwargs["description"]
+    inst = kwargs["instruction"]
+    with StringIO() as ss:
+        try:
+            nws_head = params["NWSheadline"][0]
+        except KeyError:
+            nws_head = None
+        if nws_head:
+            formatted_nws_head = "\n".join(
+                textwrap.wrap(nws_head.center(len(nws_head) + 6, "."))
+            )
+            ss.write(f"{formatted_nws_head}\n\n")
+        if desc:
+            ss.write(f"{desc}\n\n")
+        if inst:
+            ss.write(f"{inst}")
+        return ss.getvalue()
+
+
 @bot.event
 async def on_ready():
     watching = discord.Activity(
@@ -211,6 +232,22 @@ class NWSMonitor(commands.Cog):
                         }
                         if is_emergency(p, ev):
                             emergencies.append(entry)
+                            async with aiofiles.open("bulletin.txt", "w") as f:
+                                await f.write(get_alert_text(**entry))
+                            if is_tore(p):
+                                send_bulletin(
+                                    f"**TORNADO EMERGENCY** for {ad}!\
+If you are in the affected area, take immediate tornado precautions!",
+                                    discord.File("bulletin.txt"),
+                                    True,
+                                )
+                            if is_ffwe(p):
+                                send_bulletin(
+                                    f"**FLASH FLOOD EMERGENCY** for {ad}!\
+If you are in the affected area, seek higher ground now!",
+                                    discord.File("bulletin.txt"),
+                                    True,
+                                )
                         else:
                             new_alerts.append(entry)
                     if sn not in WFO:
@@ -330,14 +367,18 @@ class NWSMonitor(commands.Cog):
         self.update_spc_feeds.restart()
 
 
-def is_emergency(params: dict, alert_type: Optional[str] = None):
+def is_tore(params: dict):
     tor_damage_threat = params.get("tornadoDamageThreat", [""])[0]
+    return tor_damage_threat == "CATASTROPHIC"
+
+
+def is_ffwe(params: dict):
     ff_damage_threat = params.get("flashFloodDamageThreat", [""])[0]
-    return (
-        tor_damage_threat == "CATASTROPHIC"
-        or ff_damage_threat == "CATASTROPHIC"
-        or alert_type == AlertType.EWW.value
-    )
+    return ff_damage_threat == "CATASTROPHIC"
+
+
+def is_emergency(params: dict, alert_type: Optional[str] = None):
+    return is_tore(params) or is_ffwe(params) or alert_type == AlertType.EWW.value
 
 
 async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: DataFrame):
@@ -347,21 +388,11 @@ async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: Dat
         al["description"],
         al["instruction"],
     ):
-        try:
-            nws_head = params["NWSheadline"][0]
-        except KeyError:
-            nws_head = None
         await fp.write(f"{head}\n\n")
-        if nws_head:
-            formatted_nws_head = "\n".join(
-                textwrap.wrap(nws_head.center(len(nws_head) + 6, "."))
-            )
-            await fp.write(f"{formatted_nws_head}\n\n")
-        if desc:
-            await fp.write(f"{desc}\n\n")
-        if inst:
-            await fp.write(f"{inst}\n\n")
-        await fp.write("$$\n\n")
+        await fp.write(
+            get_alert_text(parameters=params, description=desc, instruction=inst)
+        )
+        await fp.write("\n\n$$\n\n")
 
 
 def is_not_in_effect(verb: str) -> bool:
@@ -539,15 +570,11 @@ async def send_alerts(
             except KeyError:
                 nws_head = None
             async with aiofiles.open(f"alert{i}.txt", "w") as b:
-                if nws_head:
-                    formatted_nws_head = "\n".join(
-                        textwrap.wrap(nws_head.center(len(nws_head) + 6, "."))
+                await b.write(
+                    get_alert_text(
+                        parameters=params, description=desc, instruction=inst
                     )
-                    await b.write(f"{formatted_nws_head}\n\n")
-                if desc:
-                    await b.write(f"{desc}\n\n")
-                if inst:
-                    await b.write(f"{inst}\n\n")
+                )
             # I don't know if discord.File supports aiofiles objects
             with open(f"alert{i}.txt", "rb") as fp:
                 if len(text) > 4000:
