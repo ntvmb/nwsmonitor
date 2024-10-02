@@ -443,9 +443,12 @@ async def send_alerts(
             if event == AlertType.TEST.value:
                 continue
 
+            if not isinstance(params, dict):
+                _log.warning("Found malformed alert parameters.")
+
             try:
                 vtec = params["VTEC"][0].strip("/").split(".")
-            except (KeyError, AttributeError):
+            except (KeyError, AttributeError, TypeError):
                 vtec = None
             if vtec is not None:
                 m_verb = ValidTimeEventCodeVerb[vtec[1]].value
@@ -459,39 +462,39 @@ async def send_alerts(
 
             try:
                 tornado = params["tornadoDetection"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 tornado = None
             try:
                 tor_damage_threat = params["tornadoDamageThreat"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 tor_damage_threat = None
             try:
                 wind_threat = params["windThreat"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 wind_threat = None
             try:
                 max_wind = params["maxWindGust"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 max_wind = None
             try:
                 hail_threat = params["hailThreat"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 hail_threat = None
             try:
                 max_hail = params["maxHailSize"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 max_hail = None
             try:
                 tstm_damage_threat = params["thunderstormDamageThreat"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 tstm_damage_threat = None
             try:
                 flash_flood = params["flashFloodDetection"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 flash_flood = None
             try:
                 ff_damage_threat = params["flashFloodDamageThreat"][0]
-            except KeyError:
+            except (KeyError, TypeError):
                 ff_damage_threat = None
 
             if event == AlertType.TOR.value and tor_damage_threat == "CONSIDERABLE":
@@ -1155,3 +1158,44 @@ async def send_bulletin_from_file(
     msg_text = await msg.read()
     msg_text = msg_text.decode("UTF-8")
     await ctx.invoke(send_bulletin_wrapper, msg=msg_text, file=extra_file)
+
+
+@bot.slash_command(name="resend_alert", description="Resend alert by ID")
+@commands.is_owner()
+async def resend_alert(ctx: discord.ApplicationContext, alert: Option(str, "Alert ID")):
+    await ctx.defer(ephemeral=True)
+    alerts_list = global_vars.get("prev_alerts_list")
+    if alerts_list is None:
+        await ctx.respond("No alerts in cache.")
+        return
+    alerts_list = DataFrame(alerts_list)
+    consolidated_alert = alerts_list[alerts_list["id"] == alert]
+    if consolidated_alert.empty:
+        await ctx.respond("Alert not found.")
+        return
+
+    alert_dict = consolidated_alert.to_dict("list")
+    alert_2d_list = [
+        [
+            alert_dict["id"][0],
+            alert_dict["areaDesc"][0],
+            alert_dict["sent"][0],
+            alert_dict["onset"][0],
+            alert_dict["ends"][0],
+            alert_dict["messageType"][0],
+            alert_dict["event"][0],
+            alert_dict["senderName"][0],
+            alert_dict["headline"][0],
+            alert_dict["description"][0],
+            alert_dict["instruction"][0],
+            alert_dict["parameters"][0],
+            alert_dict["expires"][0],
+        ]
+    ]
+    consolidated_alert = DataFrame(alert_2d_list)
+
+    for guild in bot.guilds:
+        channel_id = server_vars.get("monitor_channel", guild.id)
+        if channel_id is not None:
+            await send_alerts(guild.id, channel_id, consolidated_alert)
+    await ctx.respond("Alert sent.")
