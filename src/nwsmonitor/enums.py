@@ -152,6 +152,7 @@ class AlertType(Enum):
     CFS = "Coastal Flood Statement"
     CFW = "Coastal Flood Warning"
     CFA = "Coastal Flood Watch"
+    CWY = "Cold Weather Advisory"
     FOG = "Dense Fog Advisory"
     SMOKE = "Dense Smoke Advisory"
     DUST = "Dust Advisory"
@@ -397,6 +398,9 @@ DEFAULT_EMOJI = {
     AlertType.WCY.value: ":cold_face:",
     AlertType.WCA.value: ":exclamation: :cold_face:",
     AlertType.WCW.value: ":bangbang: :cold_face:",
+    AlertType.CWY.value: ":cold_face:",
+    AlertType.ECA.value: ":exclamation: :cold_face:",
+    AlertType.ECW.value: ":bangbang: :cold_face:",
     AlertType.WSW.value: ":cloud_snow:",
     AlertType.WSA.value: ":exclamation: :snowflake:",
     AlertType.WSY.value: ":snowflake:",
