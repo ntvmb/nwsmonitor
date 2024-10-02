@@ -1087,7 +1087,7 @@ async def purge(ctx: discord.ApplicationContext):
 )
 @guild_only()
 @commands.has_guild_permissions(manage_channels=True)
-async def bulleting_channel(
+async def bulletin_channel(
     ctx: discord.ApplicationContext,
     channel: Option(discord.TextChannel, description="The channel to use"),
 ):
