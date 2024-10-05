@@ -25,7 +25,7 @@ from . import global_vars
 from .enums import *
 from .uptime import process_uptime_human_readable
 from .dir_calc import get_dir
-from io import StringIO, BytesIO
+from io import StringIO, BytesIO, BufferedIOBase
 from pandas import DataFrame, concat
 from typing import Dict, List, Any, Optional
 from sys import exit
@@ -180,8 +180,11 @@ class NWSMonitor(commands.Cog):
             alerts_list = concat((alerts_list, cancelled_alerts))
         else:
             is_test = True
+            prev_alerts_list = {}
+            alerts_list = TEST_ALERTS[test_id]
         new_alerts = []
         e_ids = set()
+        e_text_dict = {}
         if prev_alerts_list is None and test_id is None:
             async with aiofiles.open("alerts_.txt", "w") as fp:
                 await _write_alerts_list(fp, alerts_list)
@@ -250,24 +253,28 @@ class NWSMonitor(commands.Cog):
                         if is_emergency(p, ev):
                             emergencies.append(entry)
                             if i not in e_ids:
-                                async with aiofiles.open("bulletin.txt", "w") as f:
-                                    await f.write(get_alert_text(**entry))
-                                if is_tore(p):
-                                    send_bulletin(
-                                        f"**TORNADO EMERGENCY** for {ad}!\
+                                if i not in e_text_dict:
+                                    e_text_dict[i] = get_alert_text(**entry)
+                                    e_text = e_text_dict[i]
+                                    async with aiofiles.open("bulletin.txt", "w") as f:
+                                        await f.write(e_text)
+                                with open("bulletin.txt", "rb") as fp:
+                                    if is_tore(p):
+                                        await send_bulletin(
+                                            f"**TORNADO EMERGENCY** for {ad}!\
 If you are in the affected area, take immediate tornado precautions!",
-                                        discord.File("bulletin.txt"),
-                                        True,
-                                        is_test,
-                                    )
-                                if is_ffwe(p):
-                                    send_bulletin(
-                                        f"**FLASH FLOOD EMERGENCY** for {ad}!\
+                                            fp,
+                                            True,
+                                            is_test,
+                                        )
+                                    if is_ffwe(p):
+                                        await send_bulletin(
+                                            f"**FLASH FLOOD EMERGENCY** for {ad}!\
 If you are in the affected area, seek higher ground now!",
-                                        discord.File("bulletin.txt"),
-                                        True,
-                                        is_test,
-                                    )
+                                            fp,
+                                            True,
+                                            is_test,
+                                        )
                                 e_ids.add(i)
                         else:
                             new_alerts.append(entry)
@@ -1132,7 +1139,7 @@ Give me permission to post in said channel, or use a different channel."
 
 async def send_bulletin(
     message: str,
-    attachment: Optional[discord.File] = None,
+    attachment: Optional[BufferedIOBase] = None,
     is_automated: bool = False,
     is_test: bool = False,
 ):
@@ -1145,6 +1152,8 @@ async def send_bulletin(
             + "\n**The above bulletin is only a test. Please disregard.**"
         )
     for guild in bot.guilds:
+        if attachment is not None:
+            attachment.seek(0)
         channel_id = server_vars.get("bulletin_channel", guild.id)
         if channel_id is None:
             continue
@@ -1154,7 +1163,7 @@ async def send_bulletin(
         if attachment is None:
             await channel.send(message)
         else:
-            await channel.send(message, file=attachment)
+            await channel.send(message, file=discord.File(attachment))
 
 
 @bot.slash_command(name="send_bulletin", description="Announce something")
@@ -1169,8 +1178,10 @@ async def send_bulletin_wrapper(
     except discord.errors.InteractionResponded:
         pass
     if file is not None:
-        file = await file.to_file()
-        await send_bulletin(msg, file)
+        with open(file.filename, "wb") as f:
+            await file.save(f)
+        with open(file.filename, "rb") as f:
+            await send_bulletin(msg, f)
     else:
         await send_bulletin(msg)
     await ctx.respond("Bulletin sent!")
@@ -1232,8 +1243,12 @@ async def resend_alert(ctx: discord.ApplicationContext, alert: Option(str, "Aler
     ]
     consolidated_alert = DataFrame(alert_2d_list)
 
-    for guild in bot.guilds:
-        channel_id = server_vars.get("monitor_channel", guild.id)
-        if channel_id is not None:
-            await send_alerts(guild.id, channel_id, consolidated_alert)
+    if alert in TEST_ALERTS:
+        cog: NWSMonitor = bot.get_cog("NWSMonitor")
+        await cog.update_alerts(test_id=alert)
+    else:
+        for guild in bot.guilds:
+            channel_id = server_vars.get("monitor_channel", guild.id)
+            if channel_id is not None:
+                await send_alerts(guild.id, channel_id, consolidated_alert)
     await ctx.respond("Alert sent.")
