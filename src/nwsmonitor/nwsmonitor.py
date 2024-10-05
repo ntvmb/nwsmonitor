@@ -9,6 +9,8 @@ import aiofiles
 import aiohttp
 import asyncio
 import textwrap
+import pathlib
+import json
 from discord import (
     option,
     default_permissions,
@@ -28,6 +30,8 @@ from pandas import DataFrame, concat
 from typing import Dict, List, Any, Optional
 from sys import exit
 
+here = pathlib.Path(__file__).parent.resolve()
+TEST_ALERTS = json.loads((here / "test_alerts.json").read_text())
 NaN = float("nan")
 bot = discord.Bot(intents=discord.Intents.default())
 settings = bot.create_group("settings", "Configure the bot")
@@ -165,15 +169,20 @@ class NWSMonitor(commands.Cog):
         self.update_spc_feeds.cancel()
 
     @tasks.loop(minutes=1)
-    async def update_alerts(self):
-        prev_alerts_list = global_vars.get("prev_alerts_list")
-        alerts_list = await nws.alerts()
-        cancelled_alerts = await nws.alerts(
-            active=False, message_type="cancel", limit=100
-        )
-        alerts_list = concat((alerts_list, cancelled_alerts))
+    async def update_alerts(self, test_id: Optional[str] = None):
+        if test_id is None:
+            is_test = False
+            prev_alerts_list = global_vars.get("prev_alerts_list")
+            alerts_list = await nws.alerts()
+            cancelled_alerts = await nws.alerts(
+                active=False, message_type="cancel", limit=100
+            )
+            alerts_list = concat((alerts_list, cancelled_alerts))
+        else:
+            is_test = True
         new_alerts = []
-        if prev_alerts_list is None:
+        e_ids = set()
+        if prev_alerts_list is None and test_id is None:
             async with aiofiles.open("alerts_.txt", "w") as fp:
                 await _write_alerts_list(fp, alerts_list)
             for guild in self.bot.guilds:
@@ -183,8 +192,11 @@ class NWSMonitor(commands.Cog):
                         guild.id, channel_id, alert_count=len(alerts_list)
                     )
         else:
-            prev_alerts_list = DataFrame(prev_alerts_list)
-            prev_ids_array = prev_alerts_list["id"].array
+            if test_id is None:
+                prev_alerts_list = DataFrame(prev_alerts_list)
+                prev_ids_array = prev_alerts_list["id"].array
+            else:
+                prev_ids_array = []
             for guild in self.bot.guilds:
                 new_alerts = []
                 emergencies = []
@@ -237,22 +249,26 @@ class NWSMonitor(commands.Cog):
                         }
                         if is_emergency(p, ev):
                             emergencies.append(entry)
-                            async with aiofiles.open("bulletin.txt", "w") as f:
-                                await f.write(get_alert_text(**entry))
-                            if is_tore(p):
-                                send_bulletin(
-                                    f"**TORNADO EMERGENCY** for {ad}!\
+                            if i not in e_ids:
+                                async with aiofiles.open("bulletin.txt", "w") as f:
+                                    await f.write(get_alert_text(**entry))
+                                if is_tore(p):
+                                    send_bulletin(
+                                        f"**TORNADO EMERGENCY** for {ad}!\
 If you are in the affected area, take immediate tornado precautions!",
-                                    discord.File("bulletin.txt"),
-                                    True,
-                                )
-                            if is_ffwe(p):
-                                send_bulletin(
-                                    f"**FLASH FLOOD EMERGENCY** for {ad}!\
+                                        discord.File("bulletin.txt"),
+                                        True,
+                                        is_test,
+                                    )
+                                if is_ffwe(p):
+                                    send_bulletin(
+                                        f"**FLASH FLOOD EMERGENCY** for {ad}!\
 If you are in the affected area, seek higher ground now!",
-                                    discord.File("bulletin.txt"),
-                                    True,
-                                )
+                                        discord.File("bulletin.txt"),
+                                        True,
+                                        is_test,
+                                    )
+                                e_ids.add(i)
                         else:
                             new_alerts.append(entry)
                     if not (sn in WFO or i in prev_ids_array):
@@ -275,7 +291,8 @@ If you are in the affected area, seek higher ground now!",
                     else:
                         await send_alerts(guild.id, channel_id, new_alerts)
                     await send_alerts(guild.id, channel_id, emergencies)
-        global_vars.write("prev_alerts_list", alerts_list.to_dict("list"))
+        if test_id is None:
+            global_vars.write("prev_alerts_list", alerts_list.to_dict("list"))
 
     @update_alerts.error
     async def on_update_alerts_error(self, error: Exception):
@@ -505,9 +522,18 @@ async def send_alerts(
                 event = SpecialAlert.FFW_E.value
             elif event == AlertType.SVR.value and tstm_damage_threat == "DESTRUCTIVE":
                 event = SpecialAlert.PDS_SVR.value
+
+            # NOT AN OFFICIAL PARAMETER
+            if isinstance(params, dict):
+                is_test = params.get("isTest", False)
+            else:
+                is_test = False
+
             emoji = DEFAULT_EMOJI.get(event, ":warning:")
 
             with StringIO() as ss:
+                if is_test:
+                    ss.write("**THIS IS ONLY A TEST**\n")
                 ss.write(f"{sender_name} {m_verb} ")
                 if not is_not_in_effect(m_verb):
                     ss.write(f"{emoji} ")
@@ -572,6 +598,8 @@ async def send_alerts(
                         ss.write(f"until further notice.")
                 ss.seek(ss.tell() - 1)
                 ss.write(".")
+                if is_test:
+                    ss.write("\n**THIS IS ONLY A TEST. NO ACTION IS REQUIRED.**")
                 text = ss.getvalue()
             try:
                 nws_head = params["NWSheadline"][0]
@@ -1106,9 +1134,16 @@ async def send_bulletin(
     message: str,
     attachment: Optional[discord.File] = None,
     is_automated: bool = False,
+    is_test: bool = False,
 ):
     if is_automated:
         message = "(automated message)\n" + message
+    if is_test:
+        message = (
+            "# THIS IS A TEST\n"
+            + message
+            + "\n**The above bulletin is only a test. Please disregard.**"
+        )
     for guild in bot.guilds:
         channel_id = server_vars.get("bulletin_channel", guild.id)
         if channel_id is None:
@@ -1164,17 +1199,20 @@ async def send_bulletin_from_file(
 @commands.is_owner()
 async def resend_alert(ctx: discord.ApplicationContext, alert: Option(str, "Alert ID")):
     await ctx.defer(ephemeral=True)
-    alerts_list = global_vars.get("prev_alerts_list")
-    if alerts_list is None:
-        await ctx.respond("No alerts in cache.")
-        return
-    alerts_list = DataFrame(alerts_list)
-    consolidated_alert = alerts_list[alerts_list["id"] == alert]
-    if consolidated_alert.empty:
-        await ctx.respond("Alert not found.")
-        return
+    if alert in TEST_ALERTS:
+        alert_dict = TEST_ALERTS[alert]
+    else:
+        alerts_list = global_vars.get("prev_alerts_list")
+        if alerts_list is None:
+            await ctx.respond("No alerts in cache.")
+            return
+        alerts_list = DataFrame(alerts_list)
+        consolidated_alert = alerts_list[alerts_list["id"] == alert]
+        if consolidated_alert.empty:
+            await ctx.respond("Alert not found.")
+            return
+        alert_dict = consolidated_alert.to_dict("list")
 
-    alert_dict = consolidated_alert.to_dict("list")
     alert_2d_list = [
         [
             alert_dict["id"][0],
