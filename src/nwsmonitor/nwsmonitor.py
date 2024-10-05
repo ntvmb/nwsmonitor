@@ -261,7 +261,7 @@ class NWSMonitor(commands.Cog):
                                 with open("bulletin.txt", "rb") as fp:
                                     if is_tore(p):
                                         await send_bulletin(
-                                            f"**TORNADO EMERGENCY** for {ad}!\
+                                            f"**TORNADO EMERGENCY** for {ad}! \
 If you are in the affected area, take immediate tornado precautions!",
                                             fp,
                                             True,
@@ -269,7 +269,7 @@ If you are in the affected area, take immediate tornado precautions!",
                                         )
                                     if is_ffwe(p):
                                         await send_bulletin(
-                                            f"**FLASH FLOOD EMERGENCY** for {ad}!\
+                                            f"**FLASH FLOOD EMERGENCY** for {ad}! \
 If you are in the affected area, seek higher ground now!",
                                             fp,
                                             True,
