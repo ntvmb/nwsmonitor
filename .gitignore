@@ -4,5 +4,6 @@ nwsmonitor.code-workspace
 *Vars.json
 nwsmonitor.json
 *.txt
-start.sh
+*.sh
 *.log
+poetry.lock

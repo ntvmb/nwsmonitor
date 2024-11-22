@@ -33,8 +33,18 @@ from sys import exit
 here = pathlib.Path(__file__).parent.resolve()
 TEST_ALERTS = json.loads((here / "test_alerts.json").read_text())
 NaN = float("nan")
-bot = discord.Bot(intents=discord.Intents.default())
-settings = bot.create_group("settings", "Configure the bot")
+bot = discord.Bot(
+    intents=discord.Intents.default(),
+    default_command_integration_types={
+        discord.IntegrationType.guild_install,
+        discord.IntegrationType.user_install,
+    },
+)
+settings = bot.create_group(
+    "settings",
+    "Configure the bot",
+    integration_types={discord.IntegrationType.guild_install},
+)
 filtering = settings.create_subgroup("filtering", "Settings related to filtering")
 _log = logging.getLogger(__name__)
 
@@ -893,7 +903,8 @@ If looking for older alerts, try using the \
 
 
 @settings.command(
-    name="alert_channel", description="Set the channel to send new alerts to"
+    name="alert_channel",
+    description="Set the channel to send new alerts to",
 )
 @guild_only()
 @commands.has_guild_permissions(manage_channels=True)
