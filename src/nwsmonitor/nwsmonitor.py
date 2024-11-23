@@ -11,6 +11,7 @@ import asyncio
 import textwrap
 import pathlib
 import json
+import numpy as np
 from discord import (
     option,
     default_permissions,
@@ -774,7 +775,10 @@ async def glossary(
     ctx: discord.ApplicationContext,
     term: Option(str, "The term to look for (in title case)"),
 ):
-    await ctx.defer()
+    try:
+        await ctx.defer()
+    except discord.errors.InteractionResponded:
+        pass
     gloss = await nws.glossary()
     terms = gloss[gloss["term"] == term]
     if terms.empty:
@@ -787,6 +791,14 @@ Note: Terms are case-sensitive. Try using title case!"
             for t, d in zip(terms["term"], terms["definition"]):
                 ss.write(f"# {t}\n{d}\n")
             await ctx.respond(ss.getvalue())
+
+
+@bot.slash_command(name="random_glossary", description="Define a random glossary term")
+async def random_glossary(ctx: discord.ApplicationContext):
+    await ctx.defer()
+    gloss = await nws.glossary()
+    term = gloss["term"].sample(1).to_numpy()[0]
+    await ctx.invoke(glossary, term)
 
 
 @bot.slash_command(name="alerts", description="Look up alerts")
