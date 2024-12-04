@@ -1,84 +1,274 @@
 {
-    "GENERIC": {
-        "@id": ["https://api.weather.gov/alerts"],
-        "@type": ["wx:Alert"],
-        "id": ["TEST_ALERT_GENERIC"],
-        "areaDesc": ["Cook, IL"],
-        "sent": ["2024-10-04T18:00:00-05:00"],
-        "effective": ["2024-10-04T18:00:00-05:00"],
-        "onset": [null],
-        "expires": ["2024-10-04T18:15:00-05:00"],
-        "ends": ["2024-10-04T18:15:00-05:00"],
-        "messageType": ["Alert"],
-        "event": ["Test Alert"],
-        "senderName": ["NWS Chicago IL"],
-        "headline": [null],
-        "description": ["Monitoring message only. Please disregard."],
-        "instruction": ["Monitoring message only. Please disregard."],
-        "parameters": [{"isTest": true}]
-    },
-    "TOR-E": {
-        "@id": ["https://api.weather.gov/alerts"],
-        "@type": ["wx:Alert"],
-        "id": ["TEST_TORNADO_EMERGENCY"],
-        "areaDesc": ["Sangamon, IL"],
-        "sent": ["2024-10-04T18:00:00-05:00"],
-        "effective": ["2024-10-04T18:00:00-05:00"],
-        "onset": ["2024-10-04T18:00:00-05:00"],
-        "expires": ["2024-10-04T18:15:00-05:00"],
-        "ends": ["2024-10-04T18:15:00-05:00"],
-        "messageType": ["Alert"],
-        "event": ["Tornado Warning"],
-        "senderName": ["NWS Lincoln IL"],
-        "headline": [null],
-        "description": ["TORILX\n\nThe National Weather Service in Lincoln has issued a\n\n* THIS IS A TEST MESSAGE. This is a TEST Tornado Warning for...\n  Sangamon County in central Illinois...\n\n* THIS IS A TEST MESSAGE. Until 615 PM CDT.\n\n* THIS IS A TEST MESSAGE. At 600 PM CDT...This is only a test.\n  Please disregard this message. There is no tornado.\n\n  HAZARD...No severe weather was occurring or expected.\n\n  SOURCE...This is a test.\n\n  IMPACT...In a real tornado flying debris will be dangerous to \n           those caugt without shelter. Even well built homes may \n           suffer significant damage. This is a test.\n\n* THIS IS A TEST MESSAGE. Locations impacted include...\n  Springfield, Mechanicsburg, Chatham, Auburn and Loami."],
-        "instruction": ["THIS IS A TEST MESSAGE. Had there been an actual tornado, you would\nhave been given instructions on how to protect life."],
-        "parameters": [{
-            "NWSHeadline": [
-                "THIS MESSAGE IS FOR TEST PURPOSES ONLY"
-            ],
-            "VTEC": [
-                "/O.NEW.KILX.TO.W.0004.241004T2300Z-241004T2315Z/"
-            ],
-            "tornadoDetection": [
-                "OBSERVED"
-            ],
-            "tornadoDamageThreat": [
-                "CATASTROPHIC"
-            ],
-            "isTest": true
-        }]
-    },
-    "FFW-E": {
-        "@id": ["https://api.weather.gov/alerts"],
-        "@type": ["wx:Alert"],
-        "id": ["TEST_FLASH_FLOOD_EMERGENCY"],
-        "areaDesc": ["Sangamon, IL"],
-        "sent": ["2024-10-04T18:00:00-05:00"],
-        "effective": ["2024-10-04T18:00:00-05:00"],
-        "onset": ["2024-10-04T18:00:00-05:00"],
-        "expires": ["2024-10-04T18:30:00-05:00"],
-        "ends": ["2024-10-04T18:30:00-05:00"],
-        "messageType": ["Alert"],
-        "event": ["Flash Flood Warning"],
-        "senderName": ["NWS Lincoln IL"],
-        "headline": [null],
-        "description": ["FFWILX\n\nThe National Weather Service in Lincoln has issued a\n\n* THIS IS A TEST MESSAGE. This is a TEST Flash Flood Warning for...\n  Sangamon County in central Illinois...\n\n* Until 630 PM CDT.\n\n* At 600 PM CDT...This is only a test. Please disregard this\n  message. There is no flash flooding occurring at this time.\n\n  HAZARD...No flash flooding was occurring or expected.\n  \n  SOURCE...This is a test.\n  \n  IMPACT...In a real flash flood, flooding occurs mainly in poor\n           drainage and low-lying areas.\n           \n* THIS IS A TEST MESSAGE. Locations impacted include...\n  Springfield, Mechanicsburg, Chatham, Auburn and Loami."],
-        "instruction": ["THIS IS A TEST MESSAGE. If there was a real flash flood, you would\nhave been told to avoid flooded roadways. You might also have been\ntold to seek higher ground, or evacuate if such action was\nnecessary."],
-        "parameters": [{
-          "NWSheadline": [
-            "THIS MESSAGE IS FOR TEST PURPOSES ONLY"
-          ],
-          "flashFloodDetection": [
-            "OBSERVED"
-          ],
-          "flashFloodDamageThreat": [
-            "CATASTROPHIC"
-          ],
-          "VTEC": [
-            "/O.NEW.KILX.FF.W.0066.241004T2300Z-241004T2330Z/"
-          ],
-          "isTest": true
-        }]
+  "GENERIC": {
+    "@id": [
+      "https://api.weather.gov/alerts"
+    ],
+    "@type": [
+      "wx:Alert"
+    ],
+    "id": [
+      "TEST_ALERT_GENERIC"
+    ],
+    "areaDesc": [
+      "Cook, IL"
+    ],
+    "sent": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "effective": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "onset": [
+      null
+    ],
+    "expires": [
+      "2024-10-04T18:15:00-05:00"
+    ],
+    "ends": [
+      "2024-10-04T18:15:00-05:00"
+    ],
+    "messageType": [
+      "Alert"
+    ],
+    "event": [
+      "Test Alert"
+    ],
+    "senderName": [
+      "NWS Chicago IL"
+    ],
+    "headline": [
+      null
+    ],
+    "description": [
+      "Monitoring message only. Please disregard."
+    ],
+    "instruction": [
+      "Monitoring message only. Please disregard."
+    ],
+    "parameters": [
+      {
+        "isTest": true
       }
+    ]
+  },
+  "TOR-E": {
+    "@id": [
+      "https://api.weather.gov/alerts"
+    ],
+    "@type": [
+      "wx:Alert"
+    ],
+    "id": [
+      "TEST_TORNADO_EMERGENCY"
+    ],
+    "areaDesc": [
+      "Sangamon, IL"
+    ],
+    "sent": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "effective": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "onset": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "expires": [
+      "2024-10-04T18:15:00-05:00"
+    ],
+    "ends": [
+      "2024-10-04T18:15:00-05:00"
+    ],
+    "messageType": [
+      "Alert"
+    ],
+    "event": [
+      "Tornado Warning"
+    ],
+    "senderName": [
+      "NWS Lincoln IL"
+    ],
+    "headline": [
+      null
+    ],
+    "description": [
+      "TORILX\n\nThe National Weather Service in Lincoln has issued a\n\n* THIS IS A TEST MESSAGE. This is a TEST Tornado Warning for...\n  Sangamon County in central Illinois...\n\n* THIS IS A TEST MESSAGE. Until 615 PM CDT.\n\n* THIS IS A TEST MESSAGE. At 600 PM CDT...This is only a test.\n  Please disregard this message. There is no tornado.\n\n  HAZARD...No severe weather was occurring or expected.\n\n  SOURCE...This is a test.\n\n  IMPACT...In a real tornado flying debris will be dangerous to \n           those caugt without shelter. Even well built homes may \n           suffer significant damage. This is a test.\n\n* THIS IS A TEST MESSAGE. Locations impacted include...\n  Springfield, Mechanicsburg, Chatham, Auburn and Loami."
+    ],
+    "instruction": [
+      "THIS IS A TEST MESSAGE. Had there been an actual tornado, you would\nhave been given instructions on how to protect life."
+    ],
+    "parameters": [
+      {
+        "NWSHeadline": [
+          "THIS MESSAGE IS FOR TEST PURPOSES ONLY"
+        ],
+        "VTEC": [
+          "/O.NEW.KILX.TO.W.0004.241004T2300Z-241004T2315Z/"
+        ],
+        "tornadoDetection": [
+          "OBSERVED"
+        ],
+        "tornadoDamageThreat": [
+          "CATASTROPHIC"
+        ],
+        "isTest": true
+      }
+    ]
+  },
+  "FFW-E": {
+    "@id": [
+      "https://api.weather.gov/alerts"
+    ],
+    "@type": [
+      "wx:Alert"
+    ],
+    "id": [
+      "TEST_FLASH_FLOOD_EMERGENCY"
+    ],
+    "areaDesc": [
+      "Sangamon, IL"
+    ],
+    "sent": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "effective": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "onset": [
+      "2024-10-04T18:00:00-05:00"
+    ],
+    "expires": [
+      "2024-10-04T18:30:00-05:00"
+    ],
+    "ends": [
+      "2024-10-04T18:30:00-05:00"
+    ],
+    "messageType": [
+      "Alert"
+    ],
+    "event": [
+      "Flash Flood Warning"
+    ],
+    "senderName": [
+      "NWS Lincoln IL"
+    ],
+    "headline": [
+      null
+    ],
+    "description": [
+      "FFWILX\n\nThe National Weather Service in Lincoln has issued a\n\n* THIS IS A TEST MESSAGE. This is a TEST Flash Flood Warning for...\n  Sangamon County in central Illinois...\n\n* Until 630 PM CDT.\n\n* At 600 PM CDT...This is only a test. Please disregard this\n  message. There is no flash flooding occurring at this time.\n\n  HAZARD...No flash flooding was occurring or expected.\n  \n  SOURCE...This is a test.\n  \n  IMPACT...In a real flash flood, flooding occurs mainly in poor\n           drainage and low-lying areas.\n           \n* THIS IS A TEST MESSAGE. Locations impacted include...\n  Springfield, Mechanicsburg, Chatham, Auburn and Loami."
+    ],
+    "instruction": [
+      "THIS IS A TEST MESSAGE. If there was a real flash flood, you would\nhave been told to avoid flooded roadways. You might also have been\ntold to seek higher ground, or evacuate if such action was\nnecessary."
+    ],
+    "parameters": [
+      {
+        "NWSheadline": [
+          "THIS MESSAGE IS FOR TEST PURPOSES ONLY"
+        ],
+        "flashFloodDetection": [
+          "OBSERVED"
+        ],
+        "flashFloodDamageThreat": [
+          "CATASTROPHIC"
+        ],
+        "VTEC": [
+          "/O.NEW.KILX.FF.W.0066.241004T2300Z-241004T2330Z/"
+        ],
+        "isTest": true
+      }
+    ]
+  },
+  "SQW": {
+    "@id": [
+      "https://api.weather.gov/alerts"
+    ],
+    "@type": [
+      "wx:Alert"
+    ],
+    "id": [
+      "TEST_SNOW_SQUALL_WARNING"
+    ],
+    "areaDesc": [
+      "Grant, MN; Otter Tail, MN; Wilkin, MN"
+    ],
+    "sent": [
+      "2024-12-04T10:57:00-06:00"
+    ],
+    "effective": [
+      "2024-12-04T10:57:00-06:00"
+    ],
+    "onset": [
+      "2024-12-04T10:57:00-06:00"
+    ],
+    "expires": [
+      "2024-12-04T11:45:00-06:00"
+    ],
+    "ends": [
+      "2024-12-04T11:45:00-06:00"
+    ],
+    "messageType": [
+      "Alert"
+    ],
+    "event": [
+      "Snow Squall Warning"
+    ],
+    "senderName": [
+      "NWS Grand Forks ND"
+    ],
+    "headline": [
+      "Snow Squall Warning issued December 4 at 10:57AM CST until December 4 at 11:45AM CST by NWS Grand Forks ND"
+    ],
+    "description": [
+      "The National Weather Service in Grand Forks has issued a\n\n* Snow Squall Warning for...\nSouthern Otter Tail County in west central Minnesota...\nGrant County in west central Minnesota...\nSouthern Wilkin County in west central Minnesota...\n\n* Until 1145 AM CST.\n\n* At 1057 AM CST, a dangerous snow squall was located along a line\nextending from Brushvale to near Fergus Falls to near Henning,\nmoving south at 40 mph.\n\nHAZARD...Intense bursts of heavy snow. Gusty winds leading to\nblowing snow and visibility rapidly falling to less than\none-quarter mile. Wind gusts greater than 40 mph.\n\nSOURCE...Radar and webcams.\n\nIMPACT...Dangerous and life-threatening travel conditions are\nexpected to develop rapidly in the warning area.\n\nThis includes Interstate 94 in Minnesota between mile markers 55 and\n80.\n\nLocations impacted include...\nFergus Falls, Wahpeton, Breckenridge, southwestern Ottertail Lake,\nElbow Lake, Parkers Prairie, and Battle Lake."
+    ],
+    "instruction": [
+      "Slow Down! Rapid changes in visibility and road conditions are\nexpected with this dangerous snow squall. Be alert for sudden\nwhiteout conditions.\n\nReduce speed and turn on headlights! During snow squalls, the\nvisibility may suddenly drop to near zero in whiteout conditions."
+    ],
+    "parameters": [
+      {
+        "AWIPSidentifier": [
+          "SQWFGF"
+        ],
+        "WMOidentifier": [
+          "WWUS53 KFGF 041657"
+        ],
+        "eventMotionDescription": [
+          "2024-12-04T16:57:00-00:00...storm...344DEG...35KT...46.38,-96.66 46.24,-96.06 46.39,-95.42"
+        ],
+        "NWSHeadline": [
+          "THIS MESSAGE HAS BEEN REPURPOSED TO BE USE AS A TEST. NO ACTION IS NEEDED"
+        ],
+        "snowSquallDetection": [
+          "OBSERVED"
+        ],
+        "snowSquallImpact": [
+          "SIGNIFICANT"
+        ],
+        "BLOCKCHANNEL": [
+          "EAS",
+          "NWEM"
+        ],
+        "EAS-ORG": [
+          "WXR"
+        ],
+        "VTEC": [
+          "/O.NEW.KFGF.SQ.W.0008.241204T1657Z-241204T1745Z/"
+        ],
+        "eventEndingTime": [
+          "2024-12-04T17:45:00+00:00"
+        ],
+        "WEAHandling": [
+          "Imminent Threat"
+        ],
+        "CMAMtext": [
+          "Snow Squall Warning til 11:45 AM CST. Sudden whiteouts. Icy roads. Slow down! -NWS"
+        ],
+        "CMAMlongtext": [
+          "National Weather Service: Snow Squall Warning until 11:45 AM CST. Slow down or delay travel! Be ready for a sudden drop to near zero visibility and icy roads in heavy snow."
+        ],
+        "isTest": true
+      }
+    ]
+  }
 }

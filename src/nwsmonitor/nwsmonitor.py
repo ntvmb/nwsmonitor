@@ -531,6 +531,14 @@ async def send_alerts(
                 ff_damage_threat = params["flashFloodDamageThreat"][0]
             except (KeyError, TypeError):
                 ff_damage_threat = None
+            try:
+                snow_squall = params["snowSquallDetection"][0]
+            except (KeyError, TypeError):
+                snow_squall = None
+            try:
+                snow_squall_impact = params["snowSquallImpact"][0]
+            except (KeyError, TypeError):
+                snow_squall_impact = None
 
             if event == AlertType.TOR.value and tor_damage_threat == "CONSIDERABLE":
                 event = SpecialAlert.PDS_TOR.value
@@ -563,6 +571,7 @@ async def send_alerts(
                     or flash_flood is not None
                     or ff_damage_threat is not None
                     or tstm_damage_threat is not None
+                    or snow_squall is not None
                 ):
                     ss.write("(")
                     if tornado is not None:
@@ -585,6 +594,10 @@ async def send_alerts(
                         if hail_threat is not None:
                             ss.write(f" ({hail_threat})")
                         ss.write(", ")
+                    if snow_squall is not None:
+                        ss.write(f"snow squall: {snow_squall}, ")
+                    if snow_squall_impact is not None:
+                        ss.write(f"impact: {snow_squall_impact}, ")
                     ss.seek(ss.tell() - 2)  # go back 2 characters
                     ss.write(") ")
                 if sent != onset and onset is not None:
