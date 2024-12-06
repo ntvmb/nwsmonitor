@@ -282,5 +282,80 @@
         "isTest": true
       }
     ]
+  },
+  "TSW": {
+    "@id": [
+      "https://api.weather.gov/alerts"
+    ],
+    "@type": [
+      "wx:Alert"
+    ],
+    "id": [
+      "TEST_TSUNAMI_WARNING"
+    ],
+    "areaDesc": [
+      "San Pablo Bay, Suisun Bay, the West Delta and  the San Francisco Bay north of the Bay Bridge; San Francisco Bay South of the Bay Bridge; San Francisco; Coastal North Bay Including Point Reyes National Seashore; North Bay Interior Valleys; San Francisco Bay Shoreline; San Francisco Peninsula Coast; Mendocino Coast; Southwestern Humboldt; Northern Humboldt Coast; Coastal Del Norte; South Central Oregon Coast; Curry County Coast"
+    ],
+    "sent": [
+      "2024-12-05T11:24:00-08:00"
+    ],
+    "effective": [
+      "2024-12-05T11:24:00-08:00"
+    ],
+    "onset": [
+      "2024-12-05T11:24:00-08:00"
+    ],
+    "expires": [
+      "2024-12-05T12:24:00-08:00"
+    ],
+    "ends": [
+      null
+    ],
+    "status": [
+      "Test"
+    ],
+    "messageType": [
+      "Alert"
+    ],
+    "event": [
+      "Tsunami Warning"
+    ],
+    "senderName": [
+      "NWS National Tsunami Warning Center"
+    ],
+    "headline": [
+      "Tsunami Warning issued December 5 at 11:24AM PST by NWS National Tsunami Warning Center"
+    ],
+    "description": [
+      "In the event a Tsunami Warning is issued for your area, move inland\nto higher ground.\n\nTsunami warnings mean that a tsunami with significant\ninundation is possible or is already occurring.  Tsunamis are\na series of waves dangerous many hours after initial arrival\ntime.  The first wave may not be the largest.\n\nAt 1044 AM Pacific Standard Time on December 5 an earthquake with\npreliminary magnitude 7.0 occurred 45 miles southwest of\nEureka California.\n\nEstimated tsunami start times for selected sites are;\n\nFort Bragg         California         1110 AM.  PST. December 5.\nCrescent City      California         1120 AM.  PST. December 5.\nPort Orford        Oregon             1120 AM.  PST. December 5.\nBrookings          Oregon             1125 AM.  PST. December 5.\nCharleston         Oregon             1140 AM.  PST. December 5.\nSan Francisco      California         1210 PM.  PST. December 5.\n\nThe tsunami warning will remain in effect until further notice.\nRefer to the internet site tsunami.gov for more information."
+    ],
+    "instruction": [
+      null
+    ],
+    "parameters": [
+      {
+        "AWIPSidentifier": [
+          "TSUWCA"
+        ],
+        "WMOidentifier": [
+          "WEPA41 PAAQ 051924"
+        ],
+        "NWSheadline": [
+          "THIS MESSAGE IS FOR TEST PURPOSES ONLY"
+        ],
+        "BLOCKCHANNEL": [
+          "EAS",
+          "NWEM",
+          "CMAS"
+        ],
+        "EAS-ORG": [
+          "WXR"
+        ],
+        "VTEC": [
+          "/O.NEW.PAAQ.TS.W.0022.000000T0000Z-000000T0000Z/"
+        ],
+        "isTest": true
+      }
+    ]
   }
 }
