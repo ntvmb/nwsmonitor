@@ -997,7 +997,9 @@ async def exclude_wfo(
     wfo: Option(
         str,
         description="The WFO to exclude",
-        autocomplete=discord.utils.basic_autocomplete([w.value for w in WFO]),
+        autocomplete=discord.utils.basic_autocomplete(
+            [w.value for w in WFO if w != WFO.AAQ]
+        ),
     ),
 ):
     await ctx.defer(ephemeral=True)
