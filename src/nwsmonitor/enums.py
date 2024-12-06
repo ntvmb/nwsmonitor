@@ -321,6 +321,7 @@ REQUIRED_ALERTS = {
     AlertType.LEW,
     AlertType.LAE,
     AlertType.EWW,
+    AlertType.TSW,
 }
 ALERTS_WITH_NO_END_TIME = {
     AlertType.TRA,
@@ -345,6 +346,7 @@ ALERTS_WITH_NO_END_TIME = {
     AlertType.FRW,
     AlertType.TOE,
     AlertType.NOW,
+    AlertType.TSW,
 }
 STR_ALERTS_WITH_NO_END_TIME = {a.value for a in ALERTS_WITH_NO_END_TIME}
 DEFAULT_EMOJI = {

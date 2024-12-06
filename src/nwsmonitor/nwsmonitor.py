@@ -418,7 +418,12 @@ def is_ffwe(params: dict):
 
 
 def is_emergency(params: dict, alert_type: Optional[str] = None):
-    return is_tore(params) or is_ffwe(params) or alert_type == AlertType.EWW.value
+    return (
+        is_tore(params)
+        or is_ffwe(params)
+        or alert_type == AlertType.EWW.value
+        or alert_type == AlertType.TSW.value
+    )
 
 
 async def _write_alerts_list(fp: aiofiles.threadpool.AsyncTextIOWrapper, al: DataFrame):
