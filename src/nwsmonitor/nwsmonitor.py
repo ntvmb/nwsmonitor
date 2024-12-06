@@ -554,9 +554,11 @@ async def send_alerts(
             elif event == AlertType.SVR.value and tstm_damage_threat == "DESTRUCTIVE":
                 event = SpecialAlert.PDS_SVR.value
 
-            # NOT AN OFFICIAL PARAMETER
+            # "isTest" IS NOT AN OFFICIAL PARAMETER
             if isinstance(params, dict):
                 is_test = params.get("isTest", False)
+                if not is_test:
+                    is_test = params.get("status", [])[0] != "Actual"
             else:
                 is_test = False
 
@@ -649,7 +651,7 @@ async def send_alerts(
                 )
             # I don't know if discord.File supports aiofiles objects
             with open(f"alert{i}.txt", "rb") as fp:
-                if len(text) > 4000:
+                if len(text) > 2000:
                     await channel.send(
                         f"NWSMonitor tried to send a message that was too long. \
 Here's a shortened version:\n{head}",
@@ -691,6 +693,12 @@ async def send_articles(
             async with aiofiles.open(f"article{i}.txt", "w") as b:
                 await b.write(desc)
             with open(f"article{i}.txt", "rb") as fp:
+                if len(text) > 2000:
+                    await channel.send(
+                        f"NWSMonitor tried to send a message that was too long. \
+Here's a shortened version:\n{link}",
+                        file=discord.File(fp),
+                    )
                 await channel.send(f"{title}\n{link}", file=discord.File(fp))
 
 
