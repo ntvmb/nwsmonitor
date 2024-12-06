@@ -221,7 +221,7 @@ class NWSMonitor(commands.Cog):
                     excluded_alerts = []
                 if excluded_wfos is None:
                     excluded_wfos = []
-                for i, ad, se, o, en, mt, ev, sn, hl, d, ins, p, ex in zip(
+                for i, ad, se, o, en, mt, ev, sn, hl, d, ins, p, ex, st in zip(
                     alerts_list["id"],
                     alerts_list["areaDesc"],
                     alerts_list["sent"],
@@ -235,6 +235,7 @@ class NWSMonitor(commands.Cog):
                     alerts_list["instruction"],
                     alerts_list["parameters"],
                     alerts_list["expires"],
+                    alerts_list["status"],
                 ):
                     if (
                         i not in prev_ids_array
@@ -260,7 +261,9 @@ class NWSMonitor(commands.Cog):
                             "instruction": ins,
                             "parameters": p,
                             "expires": ex,
+                            "status": st,
                         }
+                        is_test = st != "Actual"
                         if is_emergency(p, ev):
                             emergencies.append(entry)
                             if i not in e_ids:
@@ -282,6 +285,20 @@ If you are in the affected area, take immediate tornado precautions!",
                                         await send_bulletin(
                                             f"**FLASH FLOOD EMERGENCY** for {ad}! \
 If you are in the affected area, seek higher ground now!",
+                                            fp,
+                                            True,
+                                            is_test,
+                                        )
+                                    if (
+                                        ev == AlertType.TSW.value
+                                        and get_alert_status(p, mt)
+                                        != ValidTimeEventCodeVerb.CAN.value
+                                    ):
+                                        await send_bulletin(
+                                            f"A **TSUNAMI WARNING** is in \
+effect for {ad}! If you are in the affected area, get away from the coast! \
+Move inland or seek higher ground, and stay away from the coast until it is \
+deemed safe by local officials.",
                                             fp,
                                             True,
                                             is_test,
@@ -407,6 +424,23 @@ If you are in the affected area, seek higher ground now!",
         self.update_spc_feeds.restart()
 
 
+def get_alert_status(params: dict, m_type: str) -> str:
+    try:
+        vtec = params["VTEC"][0].strip("/").split(".")
+    except (KeyError, AttributeError, TypeError):
+        vtec = None
+    if vtec is not None:
+        m_verb = ValidTimeEventCodeVerb[vtec[1]].value
+    else:
+        if m_type == "Alert":
+            m_verb = ValidTimeEventCodeVerb.NEW.value
+        elif m_type == "Update":
+            m_verb = ValidTimeEventCodeVerb.default.value
+        else:
+            m_verb = ValidTimeEventCodeVerb.CAN.value
+    return m_verb
+
+
 def is_tore(params: dict):
     tor_damage_threat = params.get("tornadoDamageThreat", [""])[0]
     return tor_damage_threat == "CATASTROPHIC"
@@ -478,6 +512,7 @@ async def send_alerts(
             exp = alert[12]
             end = alert[4]
             head = alert[8]
+            status = alert[13]
             _log.debug(f"{desc=}")
             _log.debug(f"{inst=}")
             if event == AlertType.TEST.value:
@@ -486,19 +521,7 @@ async def send_alerts(
             if not isinstance(params, dict):
                 _log.warning("Found malformed alert parameters.")
 
-            try:
-                vtec = params["VTEC"][0].strip("/").split(".")
-            except (KeyError, AttributeError, TypeError):
-                vtec = None
-            if vtec is not None:
-                m_verb = ValidTimeEventCodeVerb[vtec[1]].value
-            else:
-                if m_type == "Alert":
-                    m_verb = ValidTimeEventCodeVerb.NEW.value
-                elif m_type == "Update":
-                    m_verb = ValidTimeEventCodeVerb.default.value
-                else:
-                    m_verb = ValidTimeEventCodeVerb.CAN.value
+            m_verb = get_alert_status(params, m_type)
 
             try:
                 tornado = params["tornadoDetection"][0]
@@ -557,10 +580,11 @@ async def send_alerts(
             # "isTest" IS NOT AN OFFICIAL PARAMETER
             if isinstance(params, dict):
                 is_test = params.get("isTest", False)
-                if not is_test:
-                    is_test = params.get("status", [])[0] != "Actual"
             else:
                 is_test = False
+
+            if not is_test:
+                is_test = status != "Actual"
 
             emoji = DEFAULT_EMOJI.get(event, ":warning:")
 
@@ -692,6 +716,7 @@ async def send_articles(
             date = article[3]
             async with aiofiles.open(f"article{i}.txt", "w") as b:
                 await b.write(desc)
+            text = f"{title}\n{link}"
             with open(f"article{i}.txt", "rb") as fp:
                 if len(text) > 2000:
                     await channel.send(
@@ -699,7 +724,7 @@ async def send_articles(
 Here's a shortened version:\n{link}",
                         file=discord.File(fp),
                     )
-                await channel.send(f"{title}\n{link}", file=discord.File(fp))
+                await channel.send(text, file=discord.File(fp))
 
 
 @bot.slash_command(name="ping", description="Pong!")
@@ -1210,9 +1235,29 @@ async def send_bulletin(
         if channel is None:
             continue
         if attachment is None:
-            await channel.send(message)
+            if len(message) < 2000:
+                await channel.send(message)
+            else:
+                with open("tmp.txt", "wb+") as fp:
+                    fp.write(message.encode("utf-8"))
+                    fp.seek(0)
+                    await channel.send(
+                        f"NWSMonitor tried to send a bulletin that was too long. \
+The bulletin has been sent as a file.",
+                        file=discord.File(fp),
+                    )
         else:
-            await channel.send(message, file=discord.File(attachment))
+            if len(message) < 2000:
+                await channel.send(message, file=discord.File(attachment))
+            else:
+                with open("tmp.txt", "wb+") as fp:
+                    fp.write(message.encode("utf-8"))
+                    fp.seek(0)
+                    await channel.send(
+                        f"NWSMonitor tried to send a bulletin that was too long. \
+The bulletin has been sent as a file.",
+                        files=[discord.File(fp), discord.File(attachment)],
+                    )
 
 
 @bot.slash_command(name="send_bulletin", description="Announce something")
