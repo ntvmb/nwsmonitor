@@ -327,7 +327,7 @@
       "Tsunami Warning issued December 5 at 11:24AM PST by NWS National Tsunami Warning Center"
     ],
     "description": [
-      "In the event a Tsunami Warning is issued for your area, move inland\nor to higher ground.\n\nTsunami warnings mean that a tsunami with significant\ninundation is possible or is already occurring.  Tsunamis are\na series of waves dangerous many hours after initial arrival\ntime.  The first wave may not be the largest.\n\nThe tsunami warning will remain in effect until further notice.\nRefer to the internet site tsunami.gov for more information."
+      "In the event a Tsunami Warning is issued for your area, move inland\nto higher ground.\n\nTsunami warnings mean that a tsunami with significant\ninundation is possible or is already occurring.  Tsunamis are\na series of waves dangerous many hours after initial arrival\ntime.  The first wave may not be the largest.\n\nThe tsunami warning will remain in effect until further notice.\nRefer to the internet site tsunami.gov for more information."
     ],
     "instruction": [
       null

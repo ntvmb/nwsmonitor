@@ -297,7 +297,7 @@ If you are in the affected area, seek higher ground now!",
                                         await send_bulletin(
                                             f"A **TSUNAMI WARNING** is in \
 effect for {ad}! If you are in the affected area, get away from the coast! \
-Move inland or seek higher ground, and stay away from the coast until it is \
+Move inland, seek higher ground, and stay away from the coast until it is \
 deemed safe by local officials.",
                                             fp,
                                             True,
