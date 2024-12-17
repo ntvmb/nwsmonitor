@@ -841,7 +841,9 @@ Note: Terms are case-sensitive. Try using title case!"
         with StringIO() as ss:
             for t, d in zip(terms["term"], terms["definition"]):
                 ss.write(f"# {t}\n{d}\n")
-            await ctx.respond(ss.getvalue())
+            msg = ss.getvalue()
+            msg_filtered = msg.replace("<br>", "")  # delete HTML <br>
+            await ctx.respond(msg_filtered)
 
 
 @bot.slash_command(name="random_glossary", description="Define a random glossary term")
