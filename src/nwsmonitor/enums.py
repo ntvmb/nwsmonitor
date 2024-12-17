@@ -308,6 +308,7 @@ MARINE_ALERTS = {
     AlertType.SCY_SEAS,
     AlertType.SCY_WIND,
     AlertType.SMW,
+    AlertType.LOW_WATER,
 }
 REQUIRED_ALERTS = {
     AlertType.TOR,
@@ -347,6 +348,12 @@ ALERTS_WITH_NO_END_TIME = {
     AlertType.TOE,
     AlertType.NOW,
     AlertType.TSW,
+    AlertType.TSA,
+    AlertType.TSY,
+    AlertType.AVA,
+    AlertType.AVW,
+    AlertType.AVY,
+    AlertType.BLU,
 }
 STR_ALERTS_WITH_NO_END_TIME = {a.value for a in ALERTS_WITH_NO_END_TIME}
 DEFAULT_EMOJI = {
