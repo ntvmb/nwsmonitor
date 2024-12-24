@@ -30,6 +30,7 @@ from io import StringIO, BytesIO, BufferedIOBase
 from pandas import DataFrame, concat
 from typing import Dict, List, Any, Optional
 from sys import exit
+from markdownify import markdownify as md
 
 here = pathlib.Path(__file__).parent.resolve()
 TEST_ALERTS = json.loads((here / "test_alerts.json").read_text())
@@ -840,10 +841,9 @@ Note: Terms are case-sensitive. Try using title case!"
     else:
         with StringIO() as ss:
             for t, d in zip(terms["term"], terms["definition"]):
-                ss.write(f"# {t}\n{d}\n")
+                ss.write(f"# {t}\n{md(d)}\n")
             msg = ss.getvalue()
-            msg_filtered = msg.replace("<br>", "")  # delete HTML <br>
-            await ctx.respond(msg_filtered)
+            await ctx.respond(msg)
 
 
 @bot.slash_command(name="random_glossary", description="Define a random glossary term")

@@ -59,7 +59,7 @@ authors = ["Nathaniel Greenwell <nategreenwell@live.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9, <3.13"
 aiohttp = "^3.9.5"
 pandas = "^2.2.2"
 py-cord = "^2.6.0"
@@ -67,6 +67,7 @@ aiofiles = "^24.1.0"
 tendo = "^0.3.0"
 geopy = "^2.4.1"
 addfips = "^0.4.2"
+markdownify = "^0.14.1"
 
 
 [build-system]
