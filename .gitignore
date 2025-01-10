@@ -6,4 +6,5 @@ nwsmonitor.json
 *.txt
 *.sh
 *.log
+*.png
 poetry.lock
