@@ -176,7 +176,6 @@ async def alerts(
     certainty: Optional[
         List[Literal["Observed", "Likely", "Possible", "Unlikely", "Unknown"]]
     ] = None,
-    limit: int = 500,
     cursor: Optional[str] = None,
     **kwargs,
 ) -> pd.DataFrame:
@@ -218,8 +217,6 @@ async def alerts(
         params["severity"] = severity
     if certainty:
         params["certainty"] = certainty
-    if limit:
-        params["limit"] = limit
     if cursor:
         params["cursor"] = cursor
 
