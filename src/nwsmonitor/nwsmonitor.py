@@ -187,9 +187,7 @@ class NWSMonitor(commands.Cog):
             is_test = False
             prev_alerts_list = global_vars.get("prev_alerts_list")
             alerts_list = await nws.alerts()
-            cancelled_alerts = await nws.alerts(
-                active=False, message_type="cancel", limit=100
-            )
+            cancelled_alerts = await nws.alerts(active=False, message_type="cancel")
             alerts_list = concat((alerts_list, cancelled_alerts))
         else:
             is_test = True
@@ -916,7 +914,6 @@ async def alerts(
         choices=["Observed", "Likely", "Possible", "Unlikely", "Unknown"],
         required=False,
     ) = None,
-    limit: Option(int, description="Limit number of alerts", required=False) = 500,
 ):
     await ctx.defer()
     if start_date:
@@ -936,7 +933,6 @@ async def alerts(
             urgency=urgency,
             severity=severity,
             certainty=certainty,
-            limit=limit,
         )
     else:
         alerts_list = await nws.alerts(
@@ -950,7 +946,6 @@ async def alerts(
             urgency=urgency,
             severity=severity,
             certainty=certainty,
-            limit=limit,
         )
     _log.debug(f"{alerts_list=}")
     if not alerts_list.empty:
