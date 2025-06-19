@@ -1,5 +1,4 @@
-src/nwsmonitor/__pycache__
-src/nwsmonitor/aio_nws/__pycache__
+**/__pycache__
 nwsmonitor.code-workspace
 *Vars.json
 nwsmonitor.json

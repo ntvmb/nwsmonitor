@@ -291,6 +291,7 @@ class ValidTimeEventCodeVerb(Enum):
         return cls.default
 
 
+STR_ALERTS = {a.value for a in AlertType}
 MARINE_ALERTS = {
     AlertType.BWY,
     AlertType.F_SPRAY_Y,
@@ -323,7 +324,31 @@ REQUIRED_ALERTS = {
     AlertType.LAE,
     AlertType.EWW,
     AlertType.TSW,
+    AlertType.EQW,
+    AlertType.EVI,
+    AlertType.BLU,
+    AlertType.HMW,
+    AlertType.NUW,
+    AlertType.RHW,
+    AlertType.SPW,
+    AlertType.SQW,
 }
+SVR_ALERTS = REQUIRED_ALERTS.union(
+    {
+        AlertType.TOA,
+        AlertType.SVA,
+        AlertType.SMW,
+        AlertType.TOE,
+        AlertType.SVS,
+        AlertType.DSW,
+        AlertType.TRA,
+        AlertType.TRW,
+        AlertType.HUA,
+        AlertType.HUW,
+        AlertType.TSA,
+    }
+)
+STR_SVR_ALERTS = {a.value for a in SVR_ALERTS}
 ALERTS_WITH_NO_END_TIME = {
     AlertType.TRA,
     AlertType.TRW,

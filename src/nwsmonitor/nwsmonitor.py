@@ -145,7 +145,7 @@ async def on_application_command_error(
             )
         except discord.errors.HTTPException:
             _log.exception("Failed to send response.")
-        _log.warn(
+        _log.warning(
             f"{ctx.author} attempted to execute {ctx.command.name}, but does not have permission."
         )
     elif isinstance(error, commands.errors.NoPrivateMessage):
@@ -307,7 +307,7 @@ deemed safe by local officials.",
                         else:
                             new_alerts.append(entry)
                     if not (sn in WFO or i in prev_ids_array):
-                        _log.warn(
+                        _log.warning(
                             f"Unknown WFO {sn} in alert {i}. Ignoring this alert."
                         )
                 new_alerts = DataFrame(new_alerts)
@@ -739,7 +739,7 @@ async def ping(ctx: discord.ApplicationContext):
 )
 async def current_conditions(
     ctx: discord.ApplicationContext,
-    location: Option(str, description="Address; City, State; or ZIP code."),
+    location: Option(str, description="Address; City, State; or ZIP code."),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     obs = (await nws.get_forecast(location))[0]
@@ -803,10 +803,10 @@ async def current_conditions(
 )
 async def forecast(
     ctx: discord.ApplicationContext,
-    location: Option(str, "Address; City, State; or ZIP code."),
+    location: Option(str, "Address; City, State; or ZIP code."),  # type: ignore
     units: Option(
         str, "Use US or SI units (default: us)", required=False, choices=["us", "si"]
-    ) = "us",
+    ) = "us",  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     _, forecast, real_loc = await nws.get_forecast(location, units)
@@ -824,7 +824,7 @@ async def forecast(
 @bot.slash_command(name="glossary", description="Look up a meteorological term")
 async def glossary(
     ctx: discord.ApplicationContext,
-    term: Option(str, "The term to look for (in title case)"),
+    term: Option(str, "The term to look for (in title case)"),  # type: ignore
 ):
     try:
         await ctx.defer()
@@ -858,62 +858,62 @@ async def alerts(
     ctx: discord.ApplicationContext,
     active: Option(
         bool, description="Only show active alerts (default: True)", required=False
-    ) = True,
+    ) = True,  # type: ignore
     start_date: Option(
         str,
         description="Filter by start date/time (ISO format, ignored if active=True)",
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     end_date: Option(
         str,
         description="Filter by end date/time (ISO format, ignored if active=True)",
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     status: Option(
         str,
         description="Alert status",
         choices=["actual", "exercise", "system", "test", "draft"],
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     message_type: Option(
         str,
         description="Filter by message type",
         choices=["alert", "update", "cancel"],
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     event: Option(
         str,
         description="Comma-separated list of alert names",
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     code: Option(
         str,
         description="Comma-separated list of alert codes",
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     location: Option(
         str,
         description="Filter by alert location",
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     urgency: Option(
         str,
         description="Filter alerts by urgency",
         choices=["Immediate", "Expected", "Future", "Past", "Unknown"],
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     severity: Option(
         str,
         description="Filter alerts by severity",
         choices=["Extreme", "Severe", "Moderate", "Minor", "Unknown"],
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
     certainty: Option(
         str,
         description="Filter alerts by certainty",
         choices=["Observed", "Likely", "Possible", "Unlikely", "Unknown"],
         required=False,
-    ) = None,
+    ) = None,  # type: ignore
 ):
     await ctx.defer()
     if start_date:
@@ -971,7 +971,7 @@ If looking for older alerts, try using the \
 @commands.has_guild_permissions(manage_channels=True)
 async def set_alert_channel(
     ctx: discord.ApplicationContext,
-    channel: Option(discord.TextChannel, description="The channel to use"),
+    channel: Option(discord.TextChannel, description="The channel to use"),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     if channel.permissions_for(ctx.me).send_messages:
@@ -998,7 +998,7 @@ async def exclude_wfo(
         autocomplete=discord.utils.basic_autocomplete(
             [w.value for w in WFO if w != WFO.AAQ]
         ),
-    ),
+    ),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     exclusions = server_vars.get("exclude_wfos", ctx.guild_id)
@@ -1028,15 +1028,19 @@ async def exclude_alert(
         autocomplete=discord.utils.basic_autocomplete(
             [a.value for a in AlertType if a not in REQUIRED_ALERTS]
         ),
-    ),
+    ),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
     if isinstance(exclusions, list):
+        if set(exclusions).issuperset(STR_ALERTS - STR_SVR_ALERTS):
+            await ctx.respond("This command cannot be used in SVR WX mode.")
+            return
         if alert not in exclusions:
             exclusions.append(alert)
         else:
             await ctx.respond(f'"{alert}" is already excluded.')
+            return
     else:
         exclusions = [alert]
     server_vars.write("exclude_alerts", exclusions, ctx.guild_id)
@@ -1053,6 +1057,9 @@ async def exclude_marine_alerts(ctx: discord.ApplicationContext):
     await ctx.defer(ephemeral=True)
     exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
     if isinstance(exclusions, list):
+        if set(exclusions).issuperset(STR_ALERTS - STR_SVR_ALERTS):
+            await ctx.respond("This command cannot be used in SVR WX mode.")
+            return
         # Working with a set here ensures that there are no duplicate
         # elements.
         exclusions = set(exclusions).update({a.value for a in MARINE_ALERTS})
@@ -1076,6 +1083,7 @@ async def clear_filters(ctx: discord.ApplicationContext):
     await ctx.defer(ephemeral=True)
     server_vars.write("exclude_wfos", None, ctx.guild_id)
     server_vars.write("exclude_alerts", None, ctx.guild_id)
+    server_vars.write("exclude_alerts_old", None, ctx.guild_id)
     server_vars.write("wfo_list", None, ctx.guild_id)
     await ctx.respond("Cleared all filters.")
 
@@ -1092,7 +1100,7 @@ async def only_from_wfo(
         str,
         "The WFO to add",
         autocomplete=discord.utils.basic_autocomplete([w.value for w in WFO]),
-    ),
+    ),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     exclusions = server_vars.get("exclude_wfos", ctx.guild_id)
@@ -1106,6 +1114,40 @@ async def only_from_wfo(
         wfo_list = [wfo]
     server_vars.write("wfo_list", wfo_list, ctx.guild_id)
     await ctx.respond(f"Added {wfo} to the WFO list.")
+
+
+@filtering.command(
+    name="svrwx_mode",
+    description="Toggle SVR WX mode (Only send required "
+    "alerts and those related to severe weather)",
+)
+@guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def svrwx_mode(ctx: discord.ApplicationContext):
+    await ctx.defer(ephemeral=True)
+    exclusions = server_vars.get("exclude_alerts", ctx.guild_id)
+    if isinstance(exclusions, list):
+        if set(exclusions).issuperset(STR_ALERTS - STR_SVR_ALERTS):
+            exclusions = server_vars.get("exclude_alerts_old", ctx.guild_id)
+        else:
+            server_vars.write("exclude_alerts_old", exclusions, ctx.guild_id)
+            # Working with a set here ensures that there are no duplicate
+            # elements.
+            exclusions = set(exclusions)
+            exclusions.update(STR_ALERTS - STR_SVR_ALERTS)
+            exclusions = {a.value for a in exclusions if isinstance(a, AlertType)}
+            exclusions = list(exclusions)
+    else:
+        server_vars.write("exclude_alerts_old", exclusions, ctx.guild_id)
+        exclusions = set(AlertType) - SVR_ALERTS
+        exclusions = [a.value for a in exclusions]
+    server_vars.write("exclude_alerts", exclusions, ctx.guild_id)
+    if isinstance(exclusions, list) and set(exclusions).issuperset(
+        STR_ALERTS - STR_SVR_ALERTS
+    ):
+        await ctx.respond("Activated SVR WX mode.")
+    else:
+        await ctx.respond("Deactivated SVR WX mode.")
 
 
 @settings.command(
@@ -1148,7 +1190,7 @@ Uptime: {process_uptime_human_readable()}"
 @commands.has_guild_permissions(manage_channels=True)
 async def set_spc_channel(
     ctx: discord.ApplicationContext,
-    channel: Option(discord.TextChannel, description="The channel to use"),
+    channel: Option(discord.TextChannel, description="The channel to use"),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     if channel.permissions_for(ctx.me).send_messages:
@@ -1168,7 +1210,7 @@ Give me permission to post in said channel, or use a different channel."
 @commands.has_guild_permissions(manage_channels=True)
 async def set_wpc_channel(
     ctx: discord.ApplicationContext,
-    channel: Option(discord.TextChannel, description="The channel to use"),
+    channel: Option(discord.TextChannel, description="The channel to use"),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     if channel.permissions_for(ctx.me).send_messages:
@@ -1198,7 +1240,7 @@ async def purge(ctx: discord.ApplicationContext):
 @commands.has_guild_permissions(manage_channels=True)
 async def bulletin_channel(
     ctx: discord.ApplicationContext,
-    channel: Option(discord.TextChannel, description="The channel to use"),
+    channel: Option(discord.TextChannel, description="The channel to use"),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     if channel.permissions_for(ctx.me).send_messages:
@@ -1264,8 +1306,8 @@ The bulletin has been sent as a file.",
 @commands.is_owner()
 async def send_bulletin_wrapper(
     ctx: discord.ApplicationContext,
-    msg: Option(str, "Bulletin text"),
-    file: Option(discord.Attachment, "File for extra info", required=False),
+    msg: Option(str, "Bulletin text"),  # type: ignore
+    file: Option(discord.Attachment, "File for extra info", required=False),  # type: ignore
 ):
     try:
         await ctx.defer(ephemeral=True)
@@ -1287,8 +1329,8 @@ async def send_bulletin_wrapper(
 @commands.is_owner()
 async def send_bulletin_from_file(
     ctx: discord.ApplicationContext,
-    msg: Option(discord.Attachment, "Text file"),
-    extra_file: Option(discord.Attachment, "File for extra info", required=False),
+    msg: Option(discord.Attachment, "Text file"),  # type: ignore
+    extra_file: Option(discord.Attachment, "File for extra info", required=False),  # type: ignore
 ):
     await ctx.defer(ephemeral=True)
     if not msg.content_type.startswith("text"):
@@ -1302,7 +1344,9 @@ async def send_bulletin_from_file(
 
 @bot.slash_command(name="resend_alert", description="Resend alert by ID")
 @commands.is_owner()
-async def resend_alert(ctx: discord.ApplicationContext, alert: Option(str, "Alert ID")):
+async def resend_alert(
+    ctx: discord.ApplicationContext, alert: Option(str, "Alert ID")  # type: ignore
+):
     await ctx.defer(ephemeral=True)
     if alert in TEST_ALERTS:
         alert_dict = TEST_ALERTS[alert]
