@@ -1171,6 +1171,10 @@ async def show_settings(ctx: discord.ApplicationContext):
         wpc_channel = f"<#{wpc_channel}>"
     if wfo_list is None:
         wfo_list = "Any"
+    if isinstance(alert_exclusions, list) and set(alert_exclusions).issuperset(
+        STR_ALERTS - STR_SVR_ALERTS
+    ):
+        alert_exclusions = "(SVR WX mode)"
     await ctx.respond(
         f"# Settings\n\
 Alert channel: {alert_channel}\n\
