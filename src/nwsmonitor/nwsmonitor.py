@@ -805,8 +805,20 @@ async def current_conditions(
                 alerts_desc.write(
                     f"There are {len(alerts)} alerts in effect for this location:\n"
                 )
-            for hl in alerts["headline"]:
-                alerts_desc.write(f"{hl}\n")
+            for ev, se, on, ed in zip(
+                alerts["event"],
+                alerts["sent"],
+                alerts["onset"],
+                alerts["ends"],
+            ):
+                alerts_desc.write(f"{ev}")
+                if se != on and on is not None:
+                    onset_ts = int(datetime.datetime.fromisoformat(on).timestamp())
+                    alerts_desc.write(f" in effect from <t:{onset_ts}:f>")
+                if ed is not None:
+                    end_ts = int(datetime.datetime.fromisoformat(ed).timestamp())
+                    alerts_desc.write(f" until <t:{end_ts}:f>")
+                alerts_desc.write("\n")
             msg = alerts_desc.getvalue()
     if msg:
         await ctx.respond(msg, embed=embed)
@@ -844,8 +856,20 @@ async def forecast(
                 alerts_desc.write(
                     f"There are {len(alerts)} alerts in effect for this location:\n"
                 )
-            for hl in alerts["headline"]:
-                alerts_desc.write(f"{hl}\n")
+            for ev, se, on, ed in zip(
+                alerts["event"],
+                alerts["sent"],
+                alerts["onset"],
+                alerts["ends"],
+            ):
+                alerts_desc.write(f"{ev}")
+                if se != on and on is not None:
+                    onset_ts = int(datetime.datetime.fromisoformat(on).timestamp())
+                    alerts_desc.write(f" in effect from <t:{onset_ts}:f>")
+                if ed is not None:
+                    end_ts = int(datetime.datetime.fromisoformat(ed).timestamp())
+                    alerts_desc.write(f" until <t:{end_ts}:f>")
+                alerts_desc.write("\n")
             msg = alerts_desc.getvalue()
     if msg:
         await ctx.respond(msg, embed=embed)
