@@ -73,11 +73,14 @@ async def fetch(
     client: aiohttp.ClientSession,
     api_call: str,
     accept: Optional[str] = None,
+    no_cache: bool = False,
     **kwargs,
 ) -> Any:
     headers = {"User-Agent": USER_AGENT}
     if accept:
         headers["Accept"] = accept
+    if no_cache:
+        headers["Cache-Control"] = "no-cache"
     _log.debug(f"Fetching {client._base_url}{api_call} with {headers=} and {kwargs=}")
     async with client.get(
         api_call,
@@ -263,6 +266,7 @@ async def point_forecast(
             f"/stations/{station}/observations/latest",
             NWS_DATA_FORMAT,
             require_qc="false",
+            no_cache=True,
         )
         return obs, pd.DataFrame(forecast["periods"])
 
