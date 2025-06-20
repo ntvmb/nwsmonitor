@@ -741,8 +741,9 @@ async def current_conditions(
     ctx: discord.ApplicationContext,
     location: Option(str, description="Address; City, State; or ZIP code."),  # type: ignore
 ):
-    await ctx.defer(ephemeral=True)
+    await ctx.defer()
     obs = (await nws.get_forecast(location))[0]
+    alerts = await nws.alerts_for_location(location, status="actual")
     station_name = obs["station"][-4:]
     embed = discord.Embed(
         title=f"Current conditions at {station_name}",
@@ -772,6 +773,7 @@ async def current_conditions(
     wind_chill_f = NaN if wind_chill is None else celsius_to_fahrenheit(wind_chill)
     heat_index = obs["heatIndex"]["value"]
     heat_index_f = NaN if heat_index is None else celsius_to_fahrenheit(heat_index)
+    msg = ""
     with StringIO() as desc:
         desc.write(f"Weather: {obs['textDescription']}\n")
         desc.write(f"Temperature: {temp_f:.0f}F ({temp:.0f}C)\n")
@@ -795,7 +797,21 @@ async def current_conditions(
                 f"Pressure: {pressure_inhg:.2f} in. Hg ({pressure / 100:.0f} mb)\n"
             )
         embed.description = desc.getvalue()
-    await ctx.respond(embed=embed)
+    if not alerts.empty:
+        with StringIO() as alerts_desc:
+            if len(alerts) == 1:
+                alerts_desc.write("There is 1 alert in effect for this location:\n")
+            else:
+                alerts_desc.write(
+                    f"There are {len(alerts)} alerts in effect for this location:\n"
+                )
+            for hl in alerts["headline"]:
+                alerts_desc.write(f"{hl}\n")
+            msg = alerts_desc.getvalue()
+    if msg:
+        await ctx.respond(msg, embed=embed)
+    else:
+        await ctx.respond(embed=embed)
 
 
 @bot.slash_command(
@@ -808,17 +824,33 @@ async def forecast(
         str, "Use US or SI units (default: us)", required=False, choices=["us", "si"]
     ) = "us",  # type: ignore
 ):
-    await ctx.defer(ephemeral=True)
+    await ctx.defer()
     _, forecast, real_loc = await nws.get_forecast(location, units)
+    alerts = await nws.alerts_for_location(location, status="actual")
     embed = discord.Embed(
         title=f"Forecast for {real_loc.address.removesuffix(', United States')}",
         thumbnail=forecast["icon"][0],
     )
+    msg = ""
     with StringIO() as desc:
         for period, details in zip(forecast["name"], forecast["detailedForecast"]):
             desc.write(f"{period}: {details}\n")
         embed.description = desc.getvalue()
-    await ctx.respond(embed=embed)
+    if not alerts.empty:
+        with StringIO() as alerts_desc:
+            if len(alerts) == 1:
+                alerts_desc.write("There is 1 alert in effect for this location:\n")
+            else:
+                alerts_desc.write(
+                    f"There are {len(alerts)} alerts in effect for this location:\n"
+                )
+            for hl in alerts["headline"]:
+                alerts_desc.write(f"{hl}\n")
+            msg = alerts_desc.getvalue()
+    if msg:
+        await ctx.respond(msg, embed=embed)
+    else:
+        await ctx.respond(embed=embed)
 
 
 @bot.slash_command(name="glossary", description="Look up a meteorological term")
