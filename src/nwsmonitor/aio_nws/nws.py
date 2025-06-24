@@ -98,7 +98,7 @@ async def fetch(
 
 def locate(address: str) -> Tuple[Point, Location]:
     geolocator = Nominatim(user_agent=USER_AGENT)
-    location = geolocator.geocode(address, country_codes="us")
+    location = geolocator.geocode(address, country_codes="us", timeout=20)
     if location is None:
         raise RuntimeError(f"Could not geolocate {address} within the US.")
     return Point(location.latitude, location.longitude), location

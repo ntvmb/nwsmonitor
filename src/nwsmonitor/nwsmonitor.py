@@ -764,7 +764,8 @@ async def current_conditions(
     wind_speed_mph = NaN if wind_speed is None else kmh_to_mph(wind_speed)
     wind_gust = obs["windGust"]["value"]
     wind_gust_mph = NaN if wind_gust is None else kmh_to_mph(wind_gust)
-    visibility = obs["visibility"]["value"] / 1000
+    visibility = obs["visibility"]["value"]
+    visibility = None if visibility is None else visibility / 1000
     visibility_mi = NaN if visibility is None else kmh_to_mph(visibility)
     visibility = NaN if visibility is None else visibility
     pressure = obs["barometricPressure"]["value"]
