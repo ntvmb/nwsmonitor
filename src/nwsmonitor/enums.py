@@ -3,6 +3,7 @@ from enum import Enum
 
 class WFO(Enum):
     AAQ = "NWS National Tsunami Warning Center"
+    HEB = "NWS Pacific Tsunami Warning Center"
     AFG = "NWS Fairbanks AK"
     AFC = "NWS Anchorage AK"
     AJK = "NWS Juneau AK"
