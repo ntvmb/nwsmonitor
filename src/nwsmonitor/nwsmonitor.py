@@ -733,8 +733,13 @@ Here's a shortened version:\n{link}",
 
 @bot.slash_command(name="ping", description="Pong!")
 async def ping(ctx: discord.ApplicationContext):
+    from time import perf_counter_ns
+
+    t1 = perf_counter_ns()
     await ctx.defer()
-    await ctx.respond(f"Pong! `{bot.latency * 1000:.0f} ms`")
+    t2 = perf_counter_ns()
+    # How long did it take to defer the interaction?
+    await ctx.respond(f"Pong! `{(t2 - t1)/1e6:.0f} ms`")
 
 
 @bot.slash_command(
