@@ -52,7 +52,9 @@ filtering = settings.create_subgroup("filtering", "Settings related to filtering
 autoplot = bot.create_group(
     "autoplot",
     "Use an IEM Autoplot app",
-    cooldown=commands.Cooldown(1, 30),
+    cooldown=commands.CooldownMapping(
+        commands.Cooldown(1, 30), commands.BucketType.default
+    ),
 )
 _log = logging.getLogger(__name__)
 
