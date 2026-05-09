@@ -52,6 +52,7 @@ filtering = settings.create_subgroup("filtering", "Settings related to filtering
 autoplot = bot.create_group(
     "autoplot",
     "Use an IEM Autoplot app",
+    cooldown=commands.Cooldown(1, 30),
 )
 _log = logging.getLogger(__name__)
 
@@ -156,6 +157,15 @@ async def on_application_command_error(
         try:
             await ctx.respond(
                 "This command cannot be used in a DM context.", ephemeral=True
+            )
+        except discord.errors.HTTPException:
+            _log.exception("Failed to send response.")
+    elif isinstance(error, commands.errors.CommandOnCooldown):
+        try:
+            await ctx.respond(
+                f"Please wait {math.ceil(ctx.command.get_cooldown_retry_after())}"
+                " seconds before using this command.",
+                ephemeral=True,
             )
         except discord.errors.HTTPException:
             _log.exception("Failed to send response.")
