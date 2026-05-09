@@ -165,7 +165,7 @@ async def on_application_command_error(
     elif isinstance(error, commands.errors.CommandOnCooldown):
         try:
             await ctx.respond(
-                f"Please wait {math.ceil(ctx.command.get_cooldown_retry_after())}"
+                f"Please wait {math.ceil(ctx.command.get_cooldown_retry_after(ctx))}"
                 " seconds before using this command.",
                 ephemeral=True,
             )
