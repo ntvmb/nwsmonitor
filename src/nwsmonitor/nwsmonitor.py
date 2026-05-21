@@ -150,7 +150,7 @@ async def on_application_command_error(
                 "You do not have permission to use this command. This incident will be reported.",
                 ephemeral=True,
             )
-        except discord.errors.HTTPException:
+        except Exception:
             _log.exception("Failed to send response.")
         _log.warning(
             f"{ctx.author} attempted to execute {ctx.command.name}, but does not have permission."
@@ -160,7 +160,7 @@ async def on_application_command_error(
             await ctx.respond(
                 "This command cannot be used in a DM context.", ephemeral=True
             )
-        except discord.errors.HTTPException:
+        except Exception:
             _log.exception("Failed to send response.")
     elif isinstance(error, commands.errors.CommandOnCooldown):
         try:
@@ -169,7 +169,7 @@ async def on_application_command_error(
                 " seconds before using this command.",
                 ephemeral=True,
             )
-        except discord.errors.HTTPException:
+        except Exception:
             _log.exception("Failed to send response.")
     else:
         _log.exception(
@@ -181,7 +181,7 @@ async def on_application_command_error(
                 f"An exception occurred while executing this command:\n{error}",
                 ephemeral=True,
             )
-        except discord.errors.HTTPException:
+        except Exception:
             _log.exception("Failed to send response.")
 
 
