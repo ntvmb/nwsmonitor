@@ -388,9 +388,9 @@ async def spc_wpc_outlook(
     type: Union[str, int] = 0,
     cat: Union[str, int] = 0,
     extent: Union[str, int] = 1,
-    wfo: str = "LWX",
-    fema: int = 3,
-    csector: str = "conus",
+    wfo: Optional[str] = None,
+    fema: int = 0,
+    csector: Optional[str] = None,
     valid: Optional[datetime.datetime] = None,
     no_cache: bool = False,
     **kwargs,
@@ -440,7 +440,7 @@ async def spc_wpc_outlook(
     if not fema and t == "fema":
         raise ValueError("You must specify a FEMA region number.")
     if csector is None and t == "state":
-        raise ValueError("You must specify a state or sector.")
+        csector = "conus"  # Default behavior
     await fetch_autoplot(
         number=220,
         no_cache=no_cache,

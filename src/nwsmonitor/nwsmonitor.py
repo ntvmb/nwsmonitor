@@ -1495,30 +1495,24 @@ async def spc_wpc_outlook(
         choices=["Categorical", "Tornado", "Wind", "Hail"],
         default="Categorical",
     ),  # type: ignore
-    extent: Option(
-        str,
-        description="Plot by... (Default: State/Sector)",
-        choices=["WFO", "State/Sector", "FEMA Region"],
-        default="State/Sector",
-    ),  # type: ignore
     wfo: Option(
         str,
-        description="WFO to plot. Ignored if extent is not WFO. (Default: LWX)",
-        default="LWX",
+        description="WFO to plot.",
+        required=False,
         autocomplete=discord.utils.basic_autocomplete(
             [w.name for w in WFO if not (w == WFO.AAQ or w == WFO.HEB)]
         ),
     ),  # type: ignore
     fema: Option(
         int,
-        description="FEMA region to plot. Ignored if extent is not FEMA region. (Default: 3)",
-        default=3,
-        min_value=1,
+        description="FEMA region to plot.",
+        default=0,
+        min_value=0,
         max_value=10,
     ),  # type: ignore
     sector: Option(
         str,
-        description="Sector to plot. Ignored if extent is not State/Sector. (Default: CONUS)",
+        description="Sector to plot. (Default: CONUS)",
         default=AutoplotSector.conus.value,
         autocomplete=discord.utils.basic_autocomplete(
             [s.value for s in AutoplotSector]
@@ -1546,7 +1540,12 @@ async def spc_wpc_outlook(
                 "Wrong date format. Must be YYYY/mm/dd HH24MI. "
                 f"Example: {datetime.datetime.now().strftime("%Y/%m/%d %H%M")}"
             ) from e
-    extent = extent.lower()
+    if wfo:
+        extent = "wfo"
+    elif fema:
+        extent = "fema"
+    else:
+        extent = "state/sector"
     outlook_subtype = outlook_subtype.lower()
     for s in AutoplotSector:
         if s.value == sector:
