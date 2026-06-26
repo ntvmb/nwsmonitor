@@ -35,6 +35,7 @@ from markdownify import MarkdownConverter
 
 here = pathlib.Path(__file__).parent.resolve()
 TEST_ALERTS = json.loads((here / "test_alerts.json").read_text())
+TESTS_ENABLED = False  # When True, test alerts will trigger bulletins.
 NaN = float("nan")
 bot = discord.Bot(
     intents=discord.Intents.default(),
@@ -280,7 +281,7 @@ class NWSMonitor(commands.Cog):
                             "status": st,
                         }
                         is_test = st != "Actual"
-                        if is_emergency(p, ev):
+                        if is_emergency(p, ev) and ((not is_test) or TESTS_ENABLED):
                             emergencies.append(entry)
                             if i not in e_ids:
                                 if i not in e_text_dict:
