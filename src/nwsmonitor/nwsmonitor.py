@@ -281,7 +281,9 @@ class NWSMonitor(commands.Cog):
                             "status": st,
                         }
                         is_test = st != "Actual"
-                        if is_emergency(p, ev) and ((not is_test) or TESTS_ENABLED):
+                        if is_test and not TESTS_ENABLED:
+                            continue
+                        if is_emergency(p, ev):
                             emergencies.append(entry)
                             if i not in e_ids:
                                 if i not in e_text_dict:
@@ -321,6 +323,8 @@ deemed safe by local officials.",
                                             is_test,
                                         )
                                 e_ids.add(i)
+                        elif is_pds(**entry) or is_eds(**entry):
+                            emergencies.append(entry)
                         else:
                             new_alerts.append(entry)
                     if not (sn in WFO or i in prev_ids_array):
@@ -458,6 +462,18 @@ def get_alert_status(params: dict, m_type: str) -> str:
     return m_verb
 
 
+def is_pds(text: Optional[str] = None, **kwargs) -> bool:
+    if not text:
+        text = get_alert_text(**kwargs)
+    return "PARTICULARLY DANGEROUS SITUATION" in text.upper()
+
+
+def is_eds(text: Optional[str] = None, **kwargs) -> bool:
+    if not text:
+        text = get_alert_text(**kwargs)
+    return "EXTREMELY DANGEROUS SITUATION" in text.upper()
+
+
 def is_tore(params: dict):
     tor_damage_threat = params.get("tornadoDamageThreat", [""])[0]
     return tor_damage_threat == "CATASTROPHIC"
@@ -539,6 +555,7 @@ async def send_alerts(
                 _log.warning("Found malformed alert parameters.")
 
             m_verb = get_alert_status(params, m_type)
+            text = get_alert_text(parameters=params, description=desc, instruction=inst)
 
             try:
                 tornado = params["tornadoDetection"][0]
@@ -587,12 +604,26 @@ async def send_alerts(
 
             if event == AlertType.TOR.value and tor_damage_threat == "CONSIDERABLE":
                 event = SpecialAlert.PDS_TOR.value
-            elif event == AlertType.TOR.value and tor_damage_threat == "CATASTROPHIC":
+            elif event == AlertType.TOR.value and is_tore(params):
                 event = SpecialAlert.TOR_E.value
-            elif event == AlertType.FFW.value and ff_damage_threat == "CATASTROPHIC":
+            elif event == AlertType.FFW.value and is_ffwe(params):
                 event = SpecialAlert.FFW_E.value
-            elif event == AlertType.SVR.value and tstm_damage_threat == "DESTRUCTIVE":
+            elif event == AlertType.SVR.value and is_eds(text):
                 event = SpecialAlert.PDS_SVR.value
+            elif is_pds(text):
+                match event:
+                    case AlertType.BZW.value:
+                        event = SpecialAlert.PDS_BZW.value
+                    case AlertType.ICE.value:
+                        event = SpecialAlert.PDS_ICE.value
+                    case AlertType.RFW.value:
+                        event = SpecialAlert.PDS_RFW.value
+                    case AlertType.TOA.value:
+                        event = SpecialAlert.PDS_TOA.value
+                    case AlertType.SVA.value:
+                        event = SpecialAlert.PDS_SVA.value
+                    case _:
+                        pass
 
             # "isTest" IS NOT AN OFFICIAL PARAMETER
             if isinstance(params, dict):
@@ -685,11 +716,7 @@ async def send_alerts(
             except KeyError:
                 nws_head = None
             async with aiofiles.open(f"alert{i}.txt", "w") as b:
-                await b.write(
-                    get_alert_text(
-                        parameters=params, description=desc, instruction=inst
-                    )
-                )
+                await b.write(text)
             # I don't know if discord.File supports aiofiles objects
             with open(f"alert{i}.txt", "rb") as fp:
                 if len(text) > 2000:

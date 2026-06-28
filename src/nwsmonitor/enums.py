@@ -265,8 +265,13 @@ class SpecialAlert(Enum):
     These are often used to indicate a particularly dangerous situation.
     """
 
-    PDS_SVR = "**Severe Thunderstorm Warning (PDS)**"
+    PDS_SVR = "**Severe Thunderstorm Warning (Extremely Dangerous Situation)**"
     PDS_TOR = "**Tornado Warning (PDS)**"
+    PDS_BZW = "**Blizzard Warning (PDS)**"
+    PDS_ICE = "**Ice Storm Warning (PDS)**"
+    PDS_RFW = "**Red Flag Warning (PDS)**"
+    PDS_TOA = "**Tornado Watch (PDS)**"
+    PDS_SVA = "**Severe Thunderstorm Watch (PDS)**"
     TOR_E = "**TORNADO EMERGENCY**"
     FFW_E = "**FLASH FLOOD EMERGENCY**"
 
