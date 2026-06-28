@@ -555,7 +555,9 @@ async def send_alerts(
                 _log.warning("Found malformed alert parameters.")
 
             m_verb = get_alert_status(params, m_type)
-            text = get_alert_text(parameters=params, description=desc, instruction=inst)
+            alert_text = get_alert_text(
+                parameters=params, description=desc, instruction=inst
+            )
 
             try:
                 tornado = params["tornadoDetection"][0]
@@ -716,7 +718,7 @@ async def send_alerts(
             except KeyError:
                 nws_head = None
             async with aiofiles.open(f"alert{i}.txt", "w") as b:
-                await b.write(text)
+                await b.write(alert_text)
             # I don't know if discord.File supports aiofiles objects
             with open(f"alert{i}.txt", "rb") as fp:
                 if len(text) > 2000:
