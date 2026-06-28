@@ -1033,6 +1033,11 @@ async def alerts(
         choices=["Observed", "Likely", "Possible", "Unlikely", "Unknown"],
         required=False,
     ) = None,  # type: ignore
+    pds: Option(
+        bool,
+        description="If true, only show alerts with PDS wording. (default: False)",
+        required=False,
+    ) = False,  # type: ignore
 ):
     await ctx.defer()
     if start_date:
@@ -1067,6 +1072,18 @@ async def alerts(
             certainty=certainty,
         )
     _log.debug(f"{alerts_list=}")
+    if pds:
+        to_delete = set()
+        for i, params, desc, inst in zip(
+            alerts_list["id"],
+            alerts_list["parameters"],
+            alerts_list["description"],
+            alerts_list["instruction"],
+        ):
+            text = get_alert_text(parameters=params, description=desc, instruction=inst)
+            if not (is_pds(text) or is_eds(text)):
+                to_delete.add(i)
+        alerts_list = alerts_list.loc[~alerts_list["id"].isin(to_delete)]
     if not alerts_list.empty:
         async with aiofiles.open("alerts.txt", "w") as fp:
             await _write_alerts_list(fp, alerts_list)
