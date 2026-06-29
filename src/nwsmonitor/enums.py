@@ -274,6 +274,7 @@ class SpecialAlert(Enum):
     PDS_SVA = "**Severe Thunderstorm Watch (PDS)**"
     TOR_E = "**TORNADO EMERGENCY**"
     FFW_E = "**FLASH FLOOD EMERGENCY**"
+    SVR_DESTRUCTIVE = "**Severe Thunderstorm Warning (Destructive)**"
 
 
 class ValidTimeEventCodeVerb(Enum):
@@ -491,7 +492,8 @@ DEFAULT_EMOJI = {
     AlertType.RFW.value: ":triangular_flag_on_post:",
     SpecialAlert.PDS_RFW.value: ":exclamation: :triangular_flag_on_post:",
     AlertType.SVR.value: ":cloud_lightning:",
-    SpecialAlert.PDS_SVR.value: ":exclamation: :cloud_lightning:",
+    SpecialAlert.PDS_SVR.value: ":bangbang: :cloud_lightning:",
+    SpecialAlert.SVR_DESTRUCTIVE.value: ":exclamation: :cloud_lightning:",
     AlertType.SVA.value: ":cloud:",
     SpecialAlert.PDS_SVA.value: ":exclamation: :cloud:",
     AlertType.NOW.value: ":bar_chart:",

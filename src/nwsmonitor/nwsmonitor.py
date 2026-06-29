@@ -610,8 +610,11 @@ async def send_alerts(
                 event = SpecialAlert.TOR_E.value
             elif event == AlertType.FFW.value and is_ffwe(params):
                 event = SpecialAlert.FFW_E.value
-            elif event == AlertType.SVR.value and is_eds(alert_text):
-                event = SpecialAlert.PDS_SVR.value
+            elif event == AlertType.SVR.value:
+                if is_eds(alert_text):
+                    event = SpecialAlert.PDS_SVR.value
+                elif tstm_damage_threat == "DESTRUCTIVE":
+                    event = SpecialAlert.SVR_DESTRUCTIVE.value
             elif is_pds(alert_text):
                 match event:
                     case AlertType.BZW.value:
