@@ -438,7 +438,6 @@ ALERTS_WITH_NO_END_TIME = {
     AlertType.SPW,
     AlertType.FRW,
     AlertType.TOE,
-    AlertType.NOW,
     AlertType.TSU,
     AlertType.TSA,
     AlertType.TSY,
