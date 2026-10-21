@@ -1508,6 +1508,7 @@ async def resend_alert(
             alert_dict["instruction"][0],
             alert_dict["parameters"][0],
             alert_dict["expires"][0],
+            alert_dict["status"][0],
         ]
     ]
     consolidated_alert = DataFrame(alert_2d_list)
