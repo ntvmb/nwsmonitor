@@ -484,7 +484,6 @@ DEFAULT_EMOJI = {
     SpecialAlert.SVR_DESTRUCTIVE.value: ":exclamation: :cloud_lightning:",
     AlertType.SVA.value: ":cloud:",
     SpecialAlert.PDS_SVA.value: ":exclamation: :cloud:",
-    AlertType.NOW.value: ":bar_chart:",
     AlertType.SQW.value: ":wind_face: :cloud_snow:",
     AlertType.TOA.value: ":cloud:",
     SpecialAlert.PDS_TOA.value: ":bangbang: :cloud:",
