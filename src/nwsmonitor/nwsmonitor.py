@@ -627,6 +627,8 @@ async def send_alerts(
                         event = SpecialAlert.PDS_TOA.value
                     case AlertType.SVA.value:
                         event = SpecialAlert.PDS_SVA.value
+                    case AlertType.FLW.value:
+                        event = SpecialAlert.PDS_FLW.value
                     case _:
                         pass
 

@@ -261,6 +261,7 @@ class SpecialAlert(Enum):
     PDS_RFW = "**Red Flag Warning (PDS)**"
     PDS_TOA = "**Tornado Watch (PDS)**"
     PDS_SVA = "**Severe Thunderstorm Watch (PDS)**"
+    PDS_FLW = "**Flood Warning (PDS)**"
     TOR_E = "**TORNADO EMERGENCY**"
     FFW_E = "**FLASH FLOOD EMERGENCY**"
     SVR_DESTRUCTIVE = "**Severe Thunderstorm Warning (Destructive)**"
@@ -511,4 +512,6 @@ DEFAULT_EMOJI = {
     AlertType.WWY.value: ":snowflake:",
     AlertType.SUY.value: ":surfer:",
     AlertType.SUW.value: ":exclamation: :surfer:",
+    AlertType.FLW.value: ":droplet:",
+    SpecialAlert.PDS_FLW.value: ":exclamation: :droplet:",
 }
